@@ -84,7 +84,7 @@ static inline void I_EndRead(void) {}
 boolean M_WriteFile(char const *name, void *source, int length)
 {
   FILE *fp;
-
+  return 0;
   errno = 0;
 
   if (!(fp = fopen(name, "wb")))       // Try opening file
@@ -111,6 +111,8 @@ int M_ReadFile(char const *name, byte **buffer)
 {
   FILE *fp;
 
+  lprintf(LO_WARN, "Attempting M_ReadFile %s\n", name);
+  return -1;
   if ((fp = fopen(name, "rb")))
     {
       size_t length;
@@ -894,7 +896,7 @@ struct default_s *M_LookupDefault(const char *name)
   int i;
   for (i = 0 ; i < numdefaults ; i++)
     if ((defaults[i].type != def_none) && !strcmp(name, defaults[i].name))
-      return &defaults[i];
+      return (default_t*)&defaults[i];
   I_Error("M_LookupDefault: %s not found",name);
   return NULL;
 }
@@ -1004,7 +1006,8 @@ void M_LoadDefaults (void)
   //jff 3/4/98 redundant range checks for hud deleted here
   /* proff 2001/7/1 - added prboom.wad as last entry so it's always loaded and
      doesn't overlap with the cfg settings */
-  wad_files[MAXLOADFILES-1]="prboom.wad";
+//Disabled - JD
+//  wad_files[MAXLOADFILES-1]="prboom.wad";
 }
 
 

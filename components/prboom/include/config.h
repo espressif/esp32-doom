@@ -62,7 +62,7 @@
 #define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the `mmap' function. */
-#define HAVE_MMAP 0
+#define HAVE_MMAP 1
 
 /* Define if you want network game support */
 /* #undef HAVE_NET */

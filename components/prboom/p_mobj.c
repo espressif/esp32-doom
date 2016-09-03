@@ -59,12 +59,18 @@ boolean P_SetMobjState(mobj_t* mobj,statenum_t state)
 
   // killough 4/9/98: remember states seen, to detect cycles:
 
-  static statenum_t seenstate_tab[NUMSTATES]; // fast transition table
+  static statenum_t *seenstate_tab=NULL; // fast transition table
   statenum_t *seenstate = seenstate_tab;      // pointer to table
   static int recursion;                       // detects recursion
   statenum_t i = state;                       // initial state
   boolean ret = true;                         // return value
   statenum_t tempstate[NUMSTATES];            // for use with recursion
+
+  if (seenstate_tab==NULL) {
+	seenstate_tab=malloc(NUMSTATES*sizeof(statenum_t));
+	memset(seenstate_tab, 0, NUMSTATES*sizeof(statenum_t));
+	seenstate = seenstate_tab;
+  }
 
   if (recursion++)                            // if recursion detected,
     memset(seenstate=tempstate,0,sizeof tempstate); // clear state table

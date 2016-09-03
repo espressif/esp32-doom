@@ -36,7 +36,8 @@
 extern byte filter_ditherMatrix[DITHER_DIM][DITHER_DIM];
 #define FILTER_UVBITS 6
 #define FILTER_UVDIM (1<<FILTER_UVBITS)
-extern byte filter_roundedUVMap[FILTER_UVDIM*FILTER_UVDIM];
+extern byte *filter_roundedUVMap;
+//extern byte filter_roundedUVMap[FILTER_UVDIM*FILTER_UVDIM];
 extern byte filter_roundedRowMap[4*16];
 
 void R_FilterInit(void);

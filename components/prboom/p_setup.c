@@ -1307,6 +1307,15 @@ static void P_AddLineToSector(line_t* li, sector_t* sector)
 {
   fixed_t *bbox = (void*)sector->blockbox;
 
+//DIRTY HACK! KILL ASAP! WORK-AROUND FOR HARDWARE MEMORY CORRUPTION! - JD
+	if (((int)li->v1)<0x3f000000) {
+		lprintf(LO_WARN, "P_AddLineToSector: Memory corrupted -> li->v1 = %p\n:", li->v1);
+		li->v1=li->v2;
+	}
+	if (((int)li->v2)<0x3f000000) {
+		lprintf(LO_WARN, "P_AddLineToSector: Memory corrupted -> li->v2 = %p\n:", li->v2);
+		li->v2=li->v1;
+	}
   sector->lines[sector->linecount++] = li;
   M_AddToBox (bbox, li->v1->x, li->v1->y);
   M_AddToBox (bbox, li->v2->x, li->v2->y);
@@ -1315,8 +1324,8 @@ static void P_AddLineToSector(line_t* li, sector_t* sector)
 // modified to return totallines (needed by P_LoadReject)
 static int P_GroupLines (void)
 {
-  register line_t *li;
-  register sector_t *sector;
+  line_t *li;
+  sector_t *sector;
   int i,j, total = numlines;
 
   // figgi

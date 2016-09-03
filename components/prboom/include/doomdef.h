@@ -107,17 +107,17 @@ typedef enum {
 // when multiple screen sizes are supported
 
 // proff 08/17/98: Changed for high-res
-#define MAX_SCREENWIDTH  2048
-#define MAX_SCREENHEIGHT 1536
+#define MAX_SCREENWIDTH  320
+#define MAX_SCREENHEIGHT 240
 
 // SCREENWIDTH and SCREENHEIGHT define the visible size
-extern int SCREENWIDTH;
-extern int SCREENHEIGHT;
+#define SCREENWIDTH 320
+#define SCREENHEIGHT 240
 // SCREENPITCH is the size of one line in the buffer and
 // can be bigger than the SCREENWIDTH depending on the size
 // of one pixel (8, 16 or 32 bit) and the padding at the
 // end of the line caused by hardware considerations
-extern int SCREENPITCH;
+#define SCREENPITCH (2*SCREENWIDTH)
 
 // The maximum number of players, multiplayer/networking.
 #define MAXPLAYERS       4
@@ -131,7 +131,10 @@ extern int SCREENPITCH;
 #define DEN_PLAYER8 4004
 
 // State updates, number of tics / second.
-#define TICRATE          35
+
+//#define TICRATE          35
+
+#define TICRATE          1
 
 // The current state of the game: whether we are playing, gazing
 // at the intermission screen, the game final animation, or a demo.

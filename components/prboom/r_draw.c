@@ -33,6 +33,12 @@
  *
  *-----------------------------------------------------------------------------*/
 
+
+/*
+
+ESP32 HACK: Only works for 16-bit.
+*/
+
 #include "doomstat.h"
 #include "w_wad.h"
 #include "r_main.h"
@@ -85,11 +91,12 @@ typedef enum
    COL_FLEXADD
 } columntype_e;
 
+
 static int    temp_x = 0;
 static int    tempyl[4], tempyh[4];
-static byte           byte_tempbuf[MAX_SCREENHEIGHT * 4];
+//static byte           byte_tempbuf[1];
 static unsigned short short_tempbuf[MAX_SCREENHEIGHT * 4];
-static unsigned int   int_tempbuf[MAX_SCREENHEIGHT * 4];
+//static unsigned int   int_tempbuf[1];
 static int    startx = 0;
 static int    temptype = COL_NONE;
 static int    commontop, commonbot;
@@ -207,6 +214,7 @@ void R_ResetColumnBuffer(void)
    R_FlushQuadColumn   = R_QuadFlushError;
 }
 
+/*
 #define R_DRAWCOLUMN_PIPELINE RDC_STANDARD
 #define R_DRAWCOLUMN_PIPELINE_BITS 8
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWhole8
@@ -248,7 +256,7 @@ void R_ResetColumnBuffer(void)
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHTFuzz15
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuadFuzz15
 #include "r_drawflush.inl"
-
+*/
 #define R_DRAWCOLUMN_PIPELINE RDC_STANDARD
 #define R_DRAWCOLUMN_PIPELINE_BITS 16
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWhole16
@@ -269,7 +277,7 @@ void R_ResetColumnBuffer(void)
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHTFuzz16
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuadFuzz16
 #include "r_drawflush.inl"
-
+/*
 #define R_DRAWCOLUMN_PIPELINE RDC_STANDARD
 #define R_DRAWCOLUMN_PIPELINE_BITS 32
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWhole32
@@ -290,7 +298,7 @@ void R_ResetColumnBuffer(void)
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHTFuzz32
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuadFuzz32
 #include "r_drawflush.inl"
-
+*/
 //
 // R_DrawColumn
 //
@@ -307,7 +315,7 @@ byte *translationtables;
 
 #define R_DRAWCOLUMN_PIPELINE_TYPE RDC_PIPELINE_STANDARD
 #define R_DRAWCOLUMN_PIPELINE_BASE RDC_STANDARD
-
+/*
 #define R_DRAWCOLUMN_PIPELINE_BITS 8
 #define R_DRAWCOLUMN_FUNCNAME_COMPOSITE(postfix) R_DrawColumn8 ## postfix
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWhole8
@@ -321,21 +329,21 @@ byte *translationtables;
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHT15
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuad15
 #include "r_drawcolpipeline.inl"
-
+*/
 #define R_DRAWCOLUMN_PIPELINE_BITS 16
 #define R_DRAWCOLUMN_FUNCNAME_COMPOSITE(postfix) R_DrawColumn16 ## postfix
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWhole16
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHT16
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuad16
 #include "r_drawcolpipeline.inl"
-
+/*
 #define R_DRAWCOLUMN_PIPELINE_BITS 32
 #define R_DRAWCOLUMN_FUNCNAME_COMPOSITE(postfix) R_DrawColumn32 ## postfix
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWhole32
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHT32
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuad32
 #include "r_drawcolpipeline.inl"
-
+*/
 #undef R_DRAWCOLUMN_PIPELINE_BASE
 #undef R_DRAWCOLUMN_PIPELINE_TYPE
 
@@ -353,7 +361,7 @@ byte *translationtables;
 
 #define R_DRAWCOLUMN_PIPELINE_TYPE RDC_PIPELINE_TRANSLUCENT
 #define R_DRAWCOLUMN_PIPELINE_BASE RDC_TRANSLUCENT
-
+/*
 #define R_DRAWCOLUMN_PIPELINE_BITS 8
 #define R_DRAWCOLUMN_FUNCNAME_COMPOSITE(postfix) R_DrawTLColumn8 ## postfix
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWholeTL8
@@ -367,21 +375,21 @@ byte *translationtables;
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHTTL15
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuadTL15
 #include "r_drawcolpipeline.inl"
-
+*/
 #define R_DRAWCOLUMN_PIPELINE_BITS 16
 #define R_DRAWCOLUMN_FUNCNAME_COMPOSITE(postfix) R_DrawTLColumn16 ## postfix
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWholeTL16
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHTTL16
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuadTL16
 #include "r_drawcolpipeline.inl"
-
+/*
 #define R_DRAWCOLUMN_PIPELINE_BITS 32
 #define R_DRAWCOLUMN_FUNCNAME_COMPOSITE(postfix) R_DrawTLColumn32 ## postfix
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWholeTL32
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHTTL32
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuadTL32
 #include "r_drawcolpipeline.inl"
-
+*/
 #undef R_DRAWCOLUMN_PIPELINE_BASE
 #undef R_DRAWCOLUMN_PIPELINE_TYPE
 
@@ -397,7 +405,7 @@ byte *translationtables;
 
 #define R_DRAWCOLUMN_PIPELINE_TYPE RDC_PIPELINE_TRANSLATED
 #define R_DRAWCOLUMN_PIPELINE_BASE RDC_TRANSLATED
-
+/*
 #define R_DRAWCOLUMN_PIPELINE_BITS 8
 #define R_DRAWCOLUMN_FUNCNAME_COMPOSITE(postfix) R_DrawTranslatedColumn8 ## postfix
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWhole8
@@ -411,21 +419,21 @@ byte *translationtables;
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHT15
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuad15
 #include "r_drawcolpipeline.inl"
-
+*/
 #define R_DRAWCOLUMN_PIPELINE_BITS 16
 #define R_DRAWCOLUMN_FUNCNAME_COMPOSITE(postfix) R_DrawTranslatedColumn16 ## postfix
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWhole16
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHT16
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuad16
 #include "r_drawcolpipeline.inl"
-
+/*
 #define R_DRAWCOLUMN_PIPELINE_BITS 32
 #define R_DRAWCOLUMN_FUNCNAME_COMPOSITE(postfix) R_DrawTranslatedColumn32 ## postfix
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWhole32
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHT32
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuad32
 #include "r_drawcolpipeline.inl"
-
+*/
 #undef R_DRAWCOLUMN_PIPELINE_BASE
 #undef R_DRAWCOLUMN_PIPELINE_TYPE
 
@@ -440,7 +448,7 @@ byte *translationtables;
 
 #define R_DRAWCOLUMN_PIPELINE_TYPE RDC_PIPELINE_FUZZ
 #define R_DRAWCOLUMN_PIPELINE_BASE RDC_FUZZ
-
+/*
 #define R_DRAWCOLUMN_PIPELINE_BITS 8
 #define R_DRAWCOLUMN_FUNCNAME_COMPOSITE(postfix) R_DrawFuzzColumn8 ## postfix
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWholeFuzz8
@@ -454,25 +462,26 @@ byte *translationtables;
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHTFuzz15
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuadFuzz15
 #include "r_drawcolpipeline.inl"
-
+*/
 #define R_DRAWCOLUMN_PIPELINE_BITS 16
 #define R_DRAWCOLUMN_FUNCNAME_COMPOSITE(postfix) R_DrawFuzzColumn16 ## postfix
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWholeFuzz16
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHTFuzz16
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuadFuzz16
 #include "r_drawcolpipeline.inl"
-
+/*
 #define R_DRAWCOLUMN_PIPELINE_BITS 32
 #define R_DRAWCOLUMN_FUNCNAME_COMPOSITE(postfix) R_DrawFuzzColumn32 ## postfix
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWholeFuzz32
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHTFuzz32
 #define R_FLUSHQUAD_FUNCNAME R_FlushQuadFuzz32
 #include "r_drawcolpipeline.inl"
-
+*/
 #undef R_DRAWCOLUMN_PIPELINE_BASE
 #undef R_DRAWCOLUMN_PIPELINE_TYPE
 
 static R_DrawColumn_f drawcolumnfuncs[VID_MODEMAX][RDRAW_FILTER_MAXFILTERS][RDRAW_FILTER_MAXFILTERS][RDC_PIPELINE_MAXPIPELINES] = {
+/*
   {
     {
       {NULL, NULL, NULL, NULL,},
@@ -567,6 +576,50 @@ static R_DrawColumn_f drawcolumnfuncs[VID_MODEMAX][RDRAW_FILTER_MAXFILTERS][RDRA
        R_DrawFuzzColumn15_RoundedUV_LinearZ,},
     },
   },
+*/
+
+
+  {
+    {
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+    },
+    {
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+    },
+    {
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+    },
+  },
+  {
+    {
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+    },
+    {
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+    },
+    {
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+      {NULL, NULL, NULL, NULL,},
+    },
+  },
+
   {
     {
       {NULL, NULL, NULL, NULL,},
@@ -614,6 +667,7 @@ static R_DrawColumn_f drawcolumnfuncs[VID_MODEMAX][RDRAW_FILTER_MAXFILTERS][RDRA
        R_DrawFuzzColumn16_RoundedUV_LinearZ,},
     },
   },
+/*
   {
     {
       {NULL, NULL, NULL, NULL,},
@@ -661,6 +715,7 @@ static R_DrawColumn_f drawcolumnfuncs[VID_MODEMAX][RDRAW_FILTER_MAXFILTERS][RDRA
        R_DrawFuzzColumn32_RoundedUV_LinearZ,},
     },
   },
+*/
 };
 
 R_DrawColumn_f R_GetDrawColumnFunc(enum column_pipeline_e type,
@@ -744,6 +799,7 @@ void R_InitTranslationTables (void)
 //  and the inner loop has to step in texture space u and v.
 //
 
+/*
 #define R_DRAWSPAN_FUNCNAME R_DrawSpan8_PointUV_PointZ
 #define R_DRAWSPAN_PIPELINE_BITS 8
 #define R_DRAWSPAN_PIPELINE (RDC_STANDARD)
@@ -803,7 +859,7 @@ void R_InitTranslationTables (void)
 #define R_DRAWSPAN_PIPELINE_BITS 15
 #define R_DRAWSPAN_PIPELINE (RDC_STANDARD | RDC_ROUNDED | RDC_DITHERZ)
 #include "r_drawspan.inl"
-
+*/
 #define R_DRAWSPAN_FUNCNAME R_DrawSpan16_PointUV_PointZ
 #define R_DRAWSPAN_PIPELINE_BITS 16
 #define R_DRAWSPAN_PIPELINE (RDC_STANDARD)
@@ -833,7 +889,7 @@ void R_InitTranslationTables (void)
 #define R_DRAWSPAN_PIPELINE_BITS 16
 #define R_DRAWSPAN_PIPELINE (RDC_STANDARD | RDC_ROUNDED | RDC_DITHERZ)
 #include "r_drawspan.inl"
-
+/*
 #define R_DRAWSPAN_FUNCNAME R_DrawSpan32_PointUV_PointZ
 #define R_DRAWSPAN_PIPELINE_BITS 32
 #define R_DRAWSPAN_PIPELINE (RDC_STANDARD)
@@ -863,7 +919,7 @@ void R_InitTranslationTables (void)
 #define R_DRAWSPAN_PIPELINE_BITS 32
 #define R_DRAWSPAN_PIPELINE (RDC_STANDARD | RDC_ROUNDED | RDC_DITHERZ)
 #include "r_drawspan.inl"
-
+*/
 static R_DrawSpan_f drawspanfuncs[VID_MODEMAX][RDRAW_FILTER_MAXFILTERS][RDRAW_FILTER_MAXFILTERS] = {
   {
     {
@@ -874,15 +930,15 @@ static R_DrawSpan_f drawspanfuncs[VID_MODEMAX][RDRAW_FILTER_MAXFILTERS][RDRAW_FI
     },
     {
       NULL,
-      R_DrawSpan8_PointUV_PointZ,
-      R_DrawSpan8_LinearUV_PointZ,
-      R_DrawSpan8_RoundedUV_PointZ,
+      NULL,
+      NULL,
+      NULL,
     },
     {
       NULL,
-      R_DrawSpan8_PointUV_LinearZ,
-      R_DrawSpan8_LinearUV_LinearZ,
-      R_DrawSpan8_RoundedUV_LinearZ,
+      NULL,
+      NULL,
+      NULL,
     },
     {
       NULL,
@@ -900,15 +956,15 @@ static R_DrawSpan_f drawspanfuncs[VID_MODEMAX][RDRAW_FILTER_MAXFILTERS][RDRAW_FI
     },
     {
       NULL,
-      R_DrawSpan15_PointUV_PointZ,
-      R_DrawSpan15_LinearUV_PointZ,
-      R_DrawSpan15_RoundedUV_PointZ,
+      NULL,
+      NULL,
+      NULL,
     },
     {
       NULL,
-      R_DrawSpan15_PointUV_LinearZ,
-      R_DrawSpan15_LinearUV_LinearZ,
-      R_DrawSpan15_RoundedUV_LinearZ,
+      NULL,
+      NULL,
+      NULL,
     },
     {
       NULL,
@@ -943,6 +999,7 @@ static R_DrawSpan_f drawspanfuncs[VID_MODEMAX][RDRAW_FILTER_MAXFILTERS][RDRAW_FI
       NULL,
     },
   },
+/*
   {
     {
       NULL,
@@ -969,6 +1026,7 @@ static R_DrawSpan_f drawspanfuncs[VID_MODEMAX][RDRAW_FILTER_MAXFILTERS][RDRAW_FI
       NULL,
     },
   },
+*/
 };
 
 R_DrawSpan_f R_GetDrawSpanFunc(enum draw_filter_type_e filter,

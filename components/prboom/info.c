@@ -103,7 +103,9 @@ const char *sprnames[NUMSPRITES+1] = {
 // parts where frame rewiring is done for more details and the
 // extended way a BEX file can handle this.
 
-state_t states[NUMSTATES] = {
+state_t *states;
+
+const state_t rostates[NUMSTATES] = {
   {SPR_TROO,0,-1,NULL,S_NULL,0,0},  // S_NULL
   {SPR_SHTG,4,0,A_Light0,S_NULL,0,0}, // S_LIGHTDONE
   {SPR_PUNG,0,1,A_WeaponReady,S_PUNCH,0,0}, // S_PUNCH
@@ -1252,7 +1254,9 @@ state_t states[NUMSTATES] = {
 //
 // This goes on for the next 3000+ lines...
 
-mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
+mobjinfo_t *mobjinfo;
+
+const mobjinfo_t romobjinfo[NUMMOBJTYPES] = {
   {   // MT_PLAYER
     -1,   // doomednum
     S_PLAY,   // spawnstate
@@ -4897,3 +4901,11 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
   },
 #endif
 };
+
+
+void infoInit() {
+	states=malloc(sizeof(rostates));
+	memcpy(states, rostates, sizeof(rostates));
+	mobjinfo=malloc(sizeof(romobjinfo));
+	memcpy(mobjinfo, romobjinfo, sizeof(romobjinfo));
+}

@@ -49,6 +49,8 @@
 #include "lprintf.h"
 #include "i_system.h"
 
+#define RANGECHECK
+
 static struct {
   void *cache;
 #ifdef TIMEDIAG
@@ -83,126 +85,6 @@ static void W_ReportLocks(void)
 }
 #endif
 
-#ifdef _WIN32
-typedef struct {
-  HANDLE hnd;
-  OFSTRUCT fileinfo;
-  HANDLE hnd_map;
-  void   *data;
-} mmap_info_t;
-
-mmap_info_t *mapped_wad;
-
-void W_DoneCache(void)
-{
-  size_t i;
-
-  if (cachelump) {
-    free(cachelump);
-    cachelump = NULL;
-  }
-
-  if (!mapped_wad)
-    return;
-  for (i=0; i<numwadfiles; i++)
-  {
-    if (mapped_wad[i].data)
-    {
-      UnmapViewOfFile(mapped_wad[i].data);
-      mapped_wad[i].data=NULL;
-    }
-    if (mapped_wad[i].hnd_map)
-    {
-      CloseHandle(mapped_wad[i].hnd_map);
-      mapped_wad[i].hnd_map=NULL;
-    }
-    if (mapped_wad[i].hnd)
-    {
-      CloseHandle(mapped_wad[i].hnd);
-      mapped_wad[i].hnd=NULL;
-    }
-  }
-  free(mapped_wad);
-}
-
-void W_InitCache(void)
-{
-  // set up caching
-  cachelump = calloc(numlumps, sizeof *cachelump);
-  if (!cachelump)
-    I_Error ("W_Init: Couldn't allocate lumpcache");
-
-#ifdef TIMEDIAG
-  atexit(W_ReportLocks);
-#endif
-
-  mapped_wad = calloc(numwadfiles,sizeof(mmap_info_t));
-  memset(mapped_wad,0,sizeof(mmap_info_t)*numwadfiles);
-  {
-    int i;
-    for (i=0; i<numlumps; i++)
-    {
-      int wad_index = (int)(lumpinfo[i].wadfile-wadfiles);
-
-      cachelump[i].locks = -1;
-
-      if (!lumpinfo[i].wadfile)
-        continue;
-#ifdef RANGECHECK
-      if ((wad_index<0)||((size_t)wad_index>=numwadfiles))
-        I_Error("W_InitCache: wad_index out of range");
-#endif
-      if (!mapped_wad[wad_index].data)
-      {
-        mapped_wad[wad_index].hnd =
-          (HANDLE)OpenFile(
-            wadfiles[wad_index].name,
-            &mapped_wad[wad_index].fileinfo,
-            OF_READ
-          );
-        if (mapped_wad[wad_index].hnd==(HANDLE)HFILE_ERROR)
-          I_Error("W_InitCache: OpenFile for memory mapping failed (LastError %i)",GetLastError());
-        mapped_wad[wad_index].hnd_map =
-          CreateFileMapping(
-            mapped_wad[wad_index].hnd,
-            NULL,
-            PAGE_READONLY,
-            0,
-            0,
-            NULL
-          );
-        if (mapped_wad[wad_index].hnd_map==NULL)
-          I_Error("W_InitCache: CreateFileMapping for memory mapping failed (LastError %i)",GetLastError());
-        mapped_wad[wad_index].data =
-          MapViewOfFile(
-            mapped_wad[wad_index].hnd_map,
-            FILE_MAP_READ,
-            0,
-            0,
-            0
-          );
-        if (mapped_wad[wad_index].hnd_map==NULL)
-          I_Error("W_InitCache: MapViewOfFile for memory mapping failed (LastError %i)",GetLastError());
-      }
-    }
-  }
-}
-
-const void* W_CacheLumpNum(int lump)
-{
-  int wad_index = (int)(lumpinfo[lump].wadfile-wadfiles);
-#ifdef RANGECHECK
-  if ((wad_index<0)||((size_t)wad_index>=numwadfiles))
-    I_Error("W_CacheLumpNum: wad_index out of range");
-  if ((unsigned)lump >= (unsigned)numlumps)
-    I_Error ("W_CacheLumpNum: %i >= numlumps",lump);
-#endif
-  if (!lumpinfo[lump].wadfile)
-    return NULL;
-  return (void*)((unsigned char *)mapped_wad[wad_index].data+lumpinfo[lump].position);
-}
-
-#else
 
 void ** mapped_wad;
 
@@ -232,7 +114,7 @@ void W_InitCache(void)
       if (lumpinfo[i].wadfile) {
         int fd = lumpinfo[i].wadfile->handle;
         if (!mapped_wad[fd])
-          if ((mapped_wad[fd] = mmap(NULL,I_Filelength(fd),PROT_READ,MAP_SHARED,fd,0)) == MAP_FAILED) 
+          if ((mapped_wad[fd] = I_Mmap(NULL,I_Filelength(fd),PROT_READ,MAP_SHARED,fd,0)) == MAP_FAILED) 
             I_Error("W_InitCache: failed to mmap");
       }
     }
@@ -247,7 +129,7 @@ void W_DoneCache(void)
       if (lumpinfo[i].wadfile) {
         int fd = lumpinfo[i].wadfile->handle;
         if (mapped_wad[fd]) {
-          if (munmap(mapped_wad[fd],I_Filelength(fd))) 
+          if (I_Munmap(mapped_wad[fd],I_Filelength(fd))) 
             I_Error("W_DoneCache: failed to munmap");
           mapped_wad[fd] = NULL;
         }
@@ -262,11 +144,12 @@ const void* W_CacheLumpNum(int lump)
   if ((unsigned)lump >= (unsigned)numlumps)
     I_Error ("W_CacheLumpNum: %i >= numlumps",lump);
 #endif
-  if (!lumpinfo[lump].wadfile)
+  if ((int)lumpinfo[lump].wadfile<0x3f000000) {
+    I_Error ("W_CacheLumpNum: out of range %x",(int)lumpinfo[lump].wadfile);
     return NULL;
+	}
   return ((char*)mapped_wad[lumpinfo[lump].wadfile->handle]+lumpinfo[lump].position);
 }
-#endif
 
 /*
  * W_LockLumpNum

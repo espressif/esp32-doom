@@ -52,6 +52,8 @@
 #include "st_stuff.h"
 #include "lprintf.h"
 
+#include "rom/ets_sys.h"
+
 int use_fullscreen=0;
 int use_doublebuffer=0;
 
@@ -135,6 +137,9 @@ static int newpal = 0;
 
 void I_FinishUpdate (void)
 {
+	int x, y;
+	char *chrs=" '.~+mM@";
+	uint16_t *scr=(uint16_t*)screens[0].data;
 #if 0
   if (SDL_MUSTLOCK(screen)) {
       int h;
@@ -164,6 +169,14 @@ void I_FinishUpdate (void)
   }
   SDL_Flip(screen);
 #endif
+	ets_printf("\033[1;1H");
+	for (y=0; y<240; y+=4) {
+		for (x=0; x<320; x+=2) {
+			ets_printf("%c", chrs[(scr[x+y*320])>>13]);
+		}
+		ets_printf("\n");
+	}
+
 }
 
 void I_SetPalette (int pal)
@@ -183,7 +196,7 @@ void I_SetRes(void)
 {
   int i;
 
-  I_CalculateRes(SCREENWIDTH, SCREENHEIGHT);
+//  I_CalculateRes(SCREENWIDTH, SCREENHEIGHT);
 
   // set first three to standard values
   for (i=0; i<3; i++) {
@@ -231,7 +244,7 @@ void I_UpdateVideoMode(void)
   int i;
   video_mode_t mode;
 
-  lprintf(LO_INFO, "I_UpdateVideoMode: %dx%d (%s)\n", SCREENWIDTH, SCREENHEIGHT, desired_fullscreen ? "fullscreen" : "nofullscreen");
+  lprintf(LO_INFO, "I_UpdateVideoMode: %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 
     mode = VID_MODE16;
 //    mode = VID_MODE8;

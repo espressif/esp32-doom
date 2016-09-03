@@ -25,7 +25,7 @@ static struct MD5Context md5global;
 
 void P_RecordChecksum(const char *file) {
     size_t fnsize;
-
+	return;
     fnsize = strlen(file);
 
     /* special case: write to stdout */

@@ -73,6 +73,7 @@
 #endif
 #include "i_system.h"
 
+int realtime=0;
 
 int I_StartDisplay(void)
 {
@@ -90,12 +91,12 @@ void I_uSleep(unsigned long usecs)
 
 int I_GetTime_RealTime (void)
 {
-  return 1;
+  return realtime++;
 }
 
 fixed_t I_GetTimeFrac (void)
 {
-  return 1;
+  return 0;
 }
 
 void I_GetTime_SaveMS(void)
@@ -118,13 +119,66 @@ const char* I_SigString(char* buf, size_t sz, int signum)
   return buf;
 }
 
+extern unsigned char *doom1waddata;
 
-void I_Read(int fd, void* vbuf, size_t sz)
-{
+typedef struct {
+	unsigned char *mem;
+	int offset;
+	int size;
+} FileDesc;
+
+
+static FileDesc fds[64];
+
+
+int I_Open(const char *wad, int flags) {
+	int x=3;
+	while (fds[x].mem!=NULL) x++;
+	if (strcmp(wad, "DOOM1.WAD")==0) {
+		fds[x].mem=doom1waddata;
+		fds[x].offset=0;
+		fds[x].size=3370127; //ToDo: de-hardcode - JD
+	} else {
+		lprintf(LO_INFO, "I_Open: open %s failed\n", wad);
+		return -1;
+	}
+	return x;
 }
 
-int I_Filelength(int handle)
+int I_Lseek(int ifd, off_t offset, int whence) {
+	if (whence==SEEK_SET) {
+		fds[ifd].offset=offset;
+	} else if (whence==SEEK_CUR) {
+		fds[ifd].offset+=offset;
+	} else if (whence==SEEK_END) {
+		lprintf(LO_INFO, "I_Lseek: SEEK_END unimplemented\n");
+	}
+	return fds[ifd].offset;
+}
+
+
+void I_Read(int ifd, void* vbuf, size_t sz)
 {
+	if (fds[ifd].offset+sz>fds[ifd].size) {
+		sz=fds[ifd].size-fds[ifd].offset;
+	}
+	memcpy(vbuf, fds[ifd].mem+fds[ifd].offset, sz);
+	fds[ifd].offset+=sz;
+}
+
+int I_Filelength(int ifd)
+{
+	return fds[ifd].size;
+}
+
+
+void *I_Mmap(void *addr, size_t length, int prot, int flags, int ifd, off_t offset) {
+	lprintf(LO_INFO, "I_Mmap: mmapped offset %d\n", (int)offset);
+	return fds[ifd].mem+offset;
+}
+
+
+int I_Munmap(void *addr, size_t length) {
 	return 0;
 }
 
@@ -146,5 +200,10 @@ char* I_FindFile(const char* wfname, const char* ext)
 
 void I_SetAffinityMask(void)
 {
+}
+
+
+int access(const char *path, int atype) {
+    return 1;
 }
 

@@ -51,7 +51,7 @@
 #define HU_MAXLINELENGTH  80
 #define HU_REFRESHSPACING 8 /*jff 2/26/98 space lines in text refresh widget*/
 /*jff 2/26/98 maximum number of messages allowed in refresh list */
-#define HU_MAXMESSAGES 16
+#define HU_MAXMESSAGES 4
 
 /*
  * Typedefs of widgets
@@ -72,7 +72,7 @@ typedef struct
   int   cm;                         //jff 2/16/52 output color range
 
   // killough 1/23/98: Support multiple lines:
-  #define MAXLINES 25
+  #define MAXLINES 2
 
   int   linelen;
   char  l[HU_MAXLINELENGTH*MAXLINES+1]; // line of text

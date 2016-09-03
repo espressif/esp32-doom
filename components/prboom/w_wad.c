@@ -125,6 +125,10 @@ char *AddDefaultExtension(char *path, const char *ext)
 // CPhipps - source is an enum
 //
 // proff - changed using pointer to wadfile_info_t
+
+extern unsigned char *doom1waddata;
+
+
 static void W_AddFile(wadfile_info_t *wadfile) 
 // killough 1/31/98: static, const
 {
@@ -138,11 +142,13 @@ static void W_AddFile(wadfile_info_t *wadfile)
 
   // open the file and add to directory
 
-  wadfile->handle = open(wadfile->name,O_RDONLY | O_BINARY);
+  wadfile->handle = I_Open(wadfile->name,O_RDONLY | O_BINARY);
+
+
 
 #ifdef HAVE_NET
   if (wadfile->handle == -1 && D_NetGetWad(wadfile->name)) // CPhipps
-    wadfile->handle = open(wadfile->name,O_RDONLY | O_BINARY);
+    wadfile->handle = I_Open(wadfile->name,O_RDONLY | O_BINARY);
 #endif
     
   if (wadfile->handle == -1) 
@@ -184,7 +190,7 @@ static void W_AddFile(wadfile_info_t *wadfile)
       header.infotableofs = LONG(header.infotableofs);
       length = header.numlumps*sizeof(filelump_t);
       fileinfo2free = fileinfo = malloc(length);    // killough
-      lseek(wadfile->handle, header.infotableofs, SEEK_SET);
+      I_Lseek(wadfile->handle, header.infotableofs, SEEK_SET);
       I_Read(wadfile->handle, fileinfo, length);
       numlumps += header.numlumps;
     }
@@ -202,6 +208,8 @@ static void W_AddFile(wadfile_info_t *wadfile)
         lump_p->li_namespace = ns_global;              // killough 4/17/98
         strncpy (lump_p->name, fileinfo->name, 8);
 	lump_p->source = wadfile->src;                    // Ty 08/29/98
+
+
       }
 
     free(fileinfo2free);      // killough
@@ -225,10 +233,17 @@ static int IsMarker(const char *marker, const char *name)
 static void W_CoalesceMarkedResource(const char *start_marker,
                                      const char *end_marker, int li_namespace)
 {
-  lumpinfo_t *marked = malloc(sizeof(*marked) * numlumps);
+  lumpinfo_t *marked = malloc(sizeof(lumpinfo_t) * numlumps);
   size_t i, num_marked = 0, num_unmarked = 0;
   int is_marked = 0, mark_end = 0;
   lumpinfo_t *lump = lumpinfo;
+	int x;
+
+	for (x=0; x<numlumps; x++) {
+		if (lumpinfo[x].wadfile && ((int)lumpinfo[x].wadfile<0x3F000000)) {
+		    I_Error ("Lump wad before error!");
+		}
+	}
 
   for (i=numlumps; i--; lump++)
     if (IsMarker(start_marker, lump->name))       // start marker found
@@ -259,11 +274,21 @@ static void W_CoalesceMarkedResource(const char *start_marker,
           lumpinfo[num_unmarked++] = *lump;       // else move down THIS list
 
   // Append marked list to end of unmarked list
-  memcpy(lumpinfo + num_unmarked, marked, num_marked * sizeof(*marked));
+  memcpy(&lumpinfo[num_unmarked], marked, num_marked * sizeof(*marked));
 
   free(marked);                                   // free marked list
 
   numlumps = num_unmarked + num_marked;           // new total number of lumps
+
+	for (x=0; x<numlumps; x++) {
+		if (lumpinfo[x].wadfile && ((int)lumpinfo[x].wadfile<0x3F000000)) {
+			lprintf(LO_INFO,"Lump wad error for %s at addr %p! Index=%d unmarked=%d marked=%d Should be %p is %p\n", 
+				lumpinfo[x].name, &lumpinfo[x].wadfile, x, num_unmarked, num_marked, lumpinfo[x+1].wadfile,lumpinfo[x].wadfile);
+			//ToDo: HOLY SHIT THIS IS AN OMGHUGE HACK! - JD
+			lumpinfo[x].wadfile=lumpinfo[x-1].wadfile;
+		}
+	}
+
 
   if (mark_end)                                   // add end marker
     {
@@ -328,8 +353,8 @@ int (W_CheckNumForName)(register const char *name, register int li_namespace)
   // Doom wads.
 
   while (i >= 0 && (strncasecmp(lumpinfo[i].name, name, 8) ||
-                    lumpinfo[i].li_namespace != li_namespace))
-    i = lumpinfo[i].next;
+                    lumpinfo[i].li_namespace != li_namespace)) 
+	    i = lumpinfo[i].next;
 
   // Return the matching lump, or -1 if none found.
 
@@ -415,6 +440,7 @@ void W_Init(void)
   // killough 1/24/98: change interface to use M_START/M_END explicitly
   // killough 4/17/98: Add namespace tags to each entry
   // killough 4/4/98: add colormap markers
+
   W_CoalesceMarkedResource("S_START", "S_END", ns_sprites);
   W_CoalesceMarkedResource("F_START", "F_END", ns_flats);
   W_CoalesceMarkedResource("C_START", "C_END", ns_colormaps);
@@ -468,7 +494,7 @@ void W_ReadLump(int lump, void *dest)
     {
       if (l->wadfile)
       {
-        lseek(l->wadfile->handle, l->position, SEEK_SET);
+        I_Lseek(l->wadfile->handle, l->position, SEEK_SET);
         I_Read(l->wadfile->handle, dest, l->size);
       }
     }

@@ -596,6 +596,9 @@ static const char *D_dehout(void)
   return (p && ++p < myargc ? myargv[p] : NULL);
 }
 
+
+
+extern unsigned char *doom1waddata;
 //
 // CheckIWAD
 //
@@ -611,18 +614,14 @@ static const char *D_dehout(void)
 // CPhipps - const char* for iwadname, made static
 static void CheckIWAD(const char *iwadname,GameMode_t *gmode,boolean *hassec)
 {
-  if ( !access (iwadname,R_OK) )
-  {
+//  if ( !access (iwadname,R_OK) )
+//  {
     int ud=0,rg=0,sw=0,cm=0,sc=0;
-    FILE* fp;
-
-    // Identify IWAD correctly
-    if ((fp = fopen(iwadname, "rb")))
-    {
       wadinfo_t header;
-
+	{
+	memcpy(&header, doom1waddata, sizeof(header));
       // read IWAD header
-      if (fread(&header, sizeof(header), 1, fp) == 1 && !strncmp(header.identification, "IWAD", 4))
+      if (!strncmp(header.identification, "IWAD", 4))
       {
         size_t length;
         filelump_t *fileinfo;
@@ -632,10 +631,12 @@ static void CheckIWAD(const char *iwadname,GameMode_t *gmode,boolean *hassec)
         header.infotableofs = LONG(header.infotableofs);
         length = header.numlumps;
         fileinfo = malloc(length*sizeof(filelump_t));
-        if (fseek (fp, header.infotableofs, SEEK_SET) ||
-            fread (fileinfo, sizeof(filelump_t), length, fp) != length ||
-            fclose(fp))
-          I_Error("CheckIWAD: failed to read directory %s",iwadname);
+//        if (fseek (fp, header.infotableofs, SEEK_SET) ||
+//            fread (fileinfo, sizeof(filelump_t), length, fp) != length ||
+//            fclose(fp))
+//          I_Error("CheckIWAD: failed to read directory %s",iwadname);
+		memcpy(fileinfo, doom1waddata+header.infotableofs, sizeof(filelump_t)*length);
+
 
         // scan directory for levelname lumps
         while (length--)
@@ -669,8 +670,8 @@ static void CheckIWAD(const char *iwadname,GameMode_t *gmode,boolean *hassec)
       else // missing IWAD tag in header
         I_Error("CheckIWAD: IWAD tag %s not present", iwadname);
     }
-    else // error from open call
-      I_Error("CheckIWAD: Can't open IWAD %s", iwadname);
+//else // error from open call
+//      I_Error("CheckIWAD: Can't open IWAD %s", iwadname);
 
     // Determine game mode from levels present
     // Must be a full set for whichever mode is present
@@ -689,9 +690,9 @@ static void CheckIWAD(const char *iwadname,GameMode_t *gmode,boolean *hassec)
       *gmode = registered;
     else if (sw>=9)
       *gmode = shareware;
-  }
-  else // error from access call
-    I_Error("CheckIWAD: IWAD %s not readable", iwadname);
+//  }
+//  else // error from access call
+//    I_Error("CheckIWAD: IWAD %s not readable", iwadname);
 }
 
 
@@ -728,8 +729,12 @@ static void NormalizeSlashes(char *str)
  */
 static char *FindIWADFile(void)
 {
-  int   i;
   char  * iwad  = NULL;
+  char *hardcodedIWad="DOOM1.WAD";
+  iwad=malloc(strlen(hardcodedIWad)+1);
+  strcpy(iwad, hardcodedIWad);
+#if 0
+  int   i;
 
   i = M_CheckParm("-iwad");
   if (i && (++i < myargc)) {
@@ -738,6 +743,7 @@ static char *FindIWADFile(void)
     for (i=0; !iwad && i<nstandard_iwads; i++)
       iwad = I_FindFile(standard_iwads[i], ".wad");
   }
+#endif
   return iwad;
 }
 
@@ -796,7 +802,7 @@ static void IdentifyVersion (void)
 
   iwad = FindIWADFile();
 
-#if (defined(GL_DOOM) && defined(_DEBUG))
+#if (0)
   // proff 11/99: used for debugging
   {
     FILE *f;
@@ -1145,6 +1151,7 @@ static void D_DoomMainSetup(void)
 {
   int p,slot;
 
+  infoInit();
   L_SetupConsoleMasks();
 
   setbuf(stdout,NULL);
@@ -1326,6 +1333,9 @@ static void D_DoomMainSetup(void)
     nomusicparm = nosound || M_CheckParm("-nomusic");
     nosfxparm   = nosound || M_CheckParm("-nosfx");
   }
+	//Hardcode music and sound disabled -- JD
+    nomusicparm=true;
+    nosfxparm=true;
   //jff end of sound/music command line parms
 
   // killough 3/2/98: allow -nodraw -noblit generally
@@ -1365,12 +1375,6 @@ static void D_DoomMainSetup(void)
   // New command-line options for setting a window (-window) 
   // or fullscreen (-nowindow) mode temporarily which is not saved in cfg.
   // It works like "-geom" switch
-  desired_fullscreen = use_fullscreen;
-  if ((p = M_CheckParm("-window")))
-      desired_fullscreen = 0;
-
-  if ((p = M_CheckParm("-nowindow")))
-      desired_fullscreen = 1;
 
   { // -geometry handling, change screen size for this session only
     // e6y: new code by me
@@ -1384,7 +1388,7 @@ static void D_DoomMainSetup(void)
       w = desired_screenwidth;
       h = desired_screenheight;
     }
-    I_CalculateRes(w, h);
+//    I_CalculateRes(w, h);
   }
 
 #ifdef GL_DOOM

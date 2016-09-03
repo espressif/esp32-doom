@@ -352,6 +352,12 @@ static void R_AddLine (seg_t *line)
   x1 = viewangletox[angle1];
   x2 = viewangletox[angle2];
 
+	//HACK FOR CORRUPTED MEM - JD
+  if (x1<0) x1=0;
+  if (x1>320) x1=320;
+  if (x2<0) x2=0;
+  if (x2>320) x2=320;
+
 #ifdef GL_DOOM
   // proff 11/99: we have to add these segs to avoid gaps in OpenGL
   if (x1 >= x2)       // killough 1/31/98 -- change == to >= for robustness

@@ -469,7 +469,7 @@ void R_InitTranMap(int progress)
         unsigned char pct;
         unsigned char playpal[256];
       } cache;
-      FILE *cachefp = fopen(strcat(strcpy(fname, I_DoomExeDir()), "/tranmap.dat"),"rb");
+      FILE *cachefp = NULL; //fopen(strcat(strcpy(fname, I_DoomExeDir()), "/tranmap.dat"),"rb");
 
       main_tranmap = my_tranmap = Z_Malloc(256*256, PU_STATIC, 0);  // killough 4/11/98
 
@@ -538,7 +538,8 @@ void R_InitTranMap(int progress)
                   }
               }
           }
-          if ((cachefp = fopen(fname,"wb")) != NULL) // write out the cached translucency map
+          //if ((cachefp = fopen(fname,"wb")) != NULL) // write out the cached translucency map
+			if(0) 
             {
               cache.pct = tran_filter_pct;
               memcpy(cache.playpal, playpal, 256);

@@ -345,7 +345,7 @@ static const castinfo_t castorder[] = { // CPhipps - static const, initialised h
 
 int             castnum;
 int             casttics;
-state_t*        caststate;
+const state_t*        caststate;
 boolean         castdeath;
 int             castframes;
 int             castonmelee;

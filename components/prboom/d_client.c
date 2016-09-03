@@ -82,6 +82,9 @@ int ticdup = 1;
 static int xtratics = 0;
 int              wanted_player_number;
 
+//ToDo: What is this? - JD
+int ms_to_next_tick;
+
 static boolean isExtraDDisplay = false;
 
 static void D_QuitNetGame (void);

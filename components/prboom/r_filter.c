@@ -30,6 +30,7 @@
 
 #include "doomtype.h"
 #include "r_filter.h"
+#include "z_zone.h"
 
 #define DMR 16
 byte filter_ditherMatrix[DITHER_DIM][DITHER_DIM] = {
@@ -37,11 +38,14 @@ byte filter_ditherMatrix[DITHER_DIM][DITHER_DIM] = {
   {12*DMR,  2*DMR, 15*DMR,  1*DMR},  {7*DMR,  9*DMR, 4*DMR, 10*DMR}
 };
 
-byte filter_roundedUVMap[FILTER_UVDIM*FILTER_UVDIM];
+byte *filter_roundedUVMap;
 byte filter_roundedRowMap[4*16];
 
 void R_FilterInit(void) {
   int i,j,s,t;
+
+	
+	filter_roundedUVMap=malloc(FILTER_UVDIM*FILTER_UVDIM);
 
   // scale2x takes the following source:
   // A B C

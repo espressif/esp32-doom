@@ -297,8 +297,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   memset(cmd,0,sizeof*cmd);
   cmd->consistancy = consistancy[consoleplayer][maketic%BACKUPTICS];
 
-  strafe = gamekeydown[key_strafe] || mousebuttons[mousebstrafe]
-    || joybuttons[joybstrafe];
+  strafe = gamekeydown[key_strafe] || joybuttons[joybstrafe];
   //e6y: the "RUN" key inverts the autorun state
   speed = (gamekeydown[key_speed] || joybuttons[joybspeed] ? !autorun : autorun); // phares
 
@@ -366,8 +365,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     // buttons
   cmd->chatchar = HU_dequeueChatChar();
 
-  if (gamekeydown[key_fire] || mousebuttons[mousebfire] ||
-      joybuttons[joybfire])
+  if (gamekeydown[key_fire] || joybuttons[joybfire])
     cmd->buttons |= BT_ATTACK;
 
   if (gamekeydown[key_use] || joybuttons[joybuse])
@@ -455,59 +453,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     }
 
   // mouse
-  if (mousebuttons[mousebforward])
-    forward += forwardmove[speed];
 
-    // forward double click
-  if (mousebuttons[mousebforward] != dclickstate && dclicktime > 1 )
-    {
-      dclickstate = mousebuttons[mousebforward];
-      if (dclickstate)
-        dclicks++;
-      if (dclicks == 2)
-        {
-          cmd->buttons |= BT_USE;
-          dclicks = 0;
-        }
-      else
-        dclicktime = 0;
-    }
-  else
-    if ((dclicktime += ticdup) > 20)
-      {
-        dclicks = 0;
-        dclickstate = 0;
-      }
-
-  // strafe double click
-
-  bstrafe = mousebuttons[mousebstrafe] || joybuttons[joybstrafe];
-  if (bstrafe != dclickstate2 && dclicktime2 > 1 )
-    {
-      dclickstate2 = bstrafe;
-      if (dclickstate2)
-        dclicks2++;
-      if (dclicks2 == 2)
-        {
-          cmd->buttons |= BT_USE;
-          dclicks2 = 0;
-        }
-      else
-        dclicktime2 = 0;
-    }
-  else
-    if ((dclicktime2 += ticdup) > 20)
-      {
-        dclicks2 = 0;
-        dclickstate2 = 0;
-      }
-  forward += mousey;
-  if (strafe)
-    side += mousex / 4;       /* mead  Don't want to strafe as fast as turns.*/
-  else
-    cmd->angleturn -= mousex; /* mead now have enough dynamic range 2-10-00 */
-
-  mousex = mousey = 0;
 
   if (forward > MAXPLMOVE)
     forward = MAXPLMOVE;
@@ -625,8 +571,8 @@ static void G_DoLoadLevel (void)
   joyxmove = joyymove = 0;
   mousex = mousey = 0;
   special_event = 0; paused = false;
-  memset (&mousebuttons, 0, sizeof(mousebuttons));
-  memset (&joybuttons, 0, sizeof(joybuttons));
+//  memset (mousebuttons, 0, sizeof(mousebuttons));
+//  memset (joybuttons, 0, sizeof(joybuttons));
 
   // killough 5/13/98: in case netdemo has consoleplayer other than green
   ST_Start();
@@ -2272,7 +2218,8 @@ void G_RecordDemo (const char* name)
   /* cph - Record demos straight to file
    * If file already exists, try to continue existing demo
    */
-  if (access(demoname, F_OK)) {
+//  if (access(demoname, F_OK)) {
+  if (0) {
     demofp = fopen(demoname, "wb");
   } else {
     demofp = fopen(demoname, "r+");

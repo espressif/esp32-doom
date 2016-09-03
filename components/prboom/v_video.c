@@ -502,6 +502,8 @@ static unsigned short *Palettes16 = NULL;
 static unsigned int *Palettes32 = NULL;
 static int currentPaletteIndex = 0;
 
+
+#include "GAMMATBL.h"
 //
 // V_UpdateTrueColorPalette
 //
@@ -514,13 +516,13 @@ void V_UpdateTrueColorPalette(video_mode_t mode) {
   static int usegammaOnLastPaletteGeneration = -1;
   
   int pplump = W_GetNumForName("PLAYPAL");
-  int gtlump = (W_CheckNumForName)("GAMMATBL",ns_prboom);
   const byte *pal = W_CacheLumpNum(pplump);
   // opengl doesn't use the gamma
-  const byte *const gtable = 
-    (const byte *)W_CacheLumpNum(gtlump) + 
-    (V_GetMode() == VID_MODEGL ? 0 : 256*(usegamma))
-  ;
+//  const byte *const gtable = 
+  //  (const byte *)GAMMATBL_dat + 
+    //(V_GetMode() == VID_MODEGL ? 0 : 256*(usegamma)) ;
+
+  const byte *const gtable = (const byte *)GAMMATBL_dat;
 
   int numPals = W_LumpLength(pplump) / (3*256);
   const float dontRoundAbove = 220;
@@ -628,7 +630,7 @@ void V_UpdateTrueColorPalette(video_mode_t mode) {
   }       
    
   W_UnlockLumpNum(pplump);
-  W_UnlockLumpNum(gtlump);
+//  W_UnlockLumpNum(gtlump);
 }
 
 

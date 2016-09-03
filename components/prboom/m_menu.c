@@ -843,7 +843,8 @@ void M_ReadSaveStrings(void)
     /* killough 3/22/98
      * cph - add not-demoplayback parameter */
     G_SaveGameName(name,sizeof(name),i,false);
-    fp = fopen(name,"rb");
+    fp=NULL;
+    //fp = fopen(name,"rb");
     if (!fp) {   // Ty 03/27/98 - externalized:
       strcpy(&savegamestrings[i][0],s_EMPTYSTRING);
       LoadMenue[i].status = 0;

@@ -1372,6 +1372,8 @@ void D_BuildBEXTables(void)
       deh_spritenames[i] = strdup(sprnames[i]);
    deh_spritenames[NUMSPRITES] = NULL;
 
+//Disabled - JD
+#if 0
    for(i = 1; i < NUMMUSIC; i++)
       deh_musicnames[i] = strdup(S_music[i].name);
    deh_musicnames[0] = deh_musicnames[NUMMUSIC] = NULL;
@@ -1379,6 +1381,7 @@ void D_BuildBEXTables(void)
    for(i = 1; i < NUMSFX; i++)
       deh_soundnames[i] = strdup(S_sfx[i].name);
    deh_soundnames[0] = deh_soundnames[NUMSFX] = NULL;
+#endif
 }
 
 // ====================================================================
@@ -1404,7 +1407,8 @@ void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum)
       if (!strcmp(outfilename, "-"))
         fileout = stdout;
       else
-        if (!(fileout=fopen(outfilename, firstfile ? "wt" : "at")))
+//        if (!(fileout=fopen(outfilename, firstfile ? "wt" : "at")))
+        if (0) 
           {
             lprintf(LO_WARN, "Could not open -dehout file %s\n... using stdout.\n",
                    outfilename);
@@ -1417,7 +1421,8 @@ void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum)
 
   if (filename)
     {
-      if (!(infile.f = fopen(filename,"rt")))
+      //if (!(infile.f = fopen(filename,"rt")))
+		if(0) 
         {
           lprintf(LO_WARN, "-deh file %s not found\n",filename);
           return;  // should be checked up front anyway

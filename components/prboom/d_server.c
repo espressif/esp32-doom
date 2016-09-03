@@ -365,6 +365,7 @@ int main(int argc, char** argv)
     memcpy(gameopt, &def_game_options, sizeof (setupinfo.game_options));
     while ((opt = getopt(argc, argv, "c:t:x:p:e:l:adrfns:N:vw:")) != EOF)
       switch (opt) {
+#if 0
       case 'c':
         {
 	  FILE *cf = fopen(optarg,"r");
@@ -373,6 +374,7 @@ int main(int argc, char** argv)
 	  fclose(cf);
 	}
 	break;
+#endif
       case 't':
   if (optarg) ticdup = atoi(optarg);
   break;

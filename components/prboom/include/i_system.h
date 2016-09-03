@@ -78,16 +78,16 @@ void I_SetAffinityMask(void);
 
 int doom_main(int argc, char const * const * argv);
 
-off_t lseek(int fd, off_t offset, int whence);
-
+int I_Lseek(int fd, off_t offset, int whence);
+int I_Open(const char *wad, int flags);
 
 //HACK mmap support, w_mmap.c
 #define PROT_READ 1
 #define MAP_SHARED 2
 #define MAP_FAILED (void*)-1
 
-void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
-int munmap(void *addr, size_t length);
+void *I_Mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
+int I_Munmap(void *addr, size_t length);
 
 
 #endif
