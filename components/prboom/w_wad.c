@@ -240,7 +240,7 @@ static void W_CoalesceMarkedResource(const char *start_marker,
 	int x;
 
 	for (x=0; x<numlumps; x++) {
-		if (lumpinfo[x].wadfile && ((int)lumpinfo[x].wadfile<0x3F000000)) {
+		if (lumpinfo[x].wadfile && !isValidPtr(lumpinfo[x].wadfile)) {
 		    I_Error ("Lump wad before error!");
 		}
 	}
@@ -281,7 +281,7 @@ static void W_CoalesceMarkedResource(const char *start_marker,
   numlumps = num_unmarked + num_marked;           // new total number of lumps
 
 	for (x=0; x<numlumps; x++) {
-		if (lumpinfo[x].wadfile && ((int)lumpinfo[x].wadfile<0x3F000000)) {
+		if (lumpinfo[x].wadfile && !isValidPtr(lumpinfo[x].wadfile)) {
 			lprintf(LO_INFO,"Lump wad error for %s at addr %p! Index=%d unmarked=%d marked=%d Should be %p is %p\n", 
 				lumpinfo[x].name, &lumpinfo[x].wadfile, x, num_unmarked, num_marked, lumpinfo[x+1].wadfile,lumpinfo[x].wadfile);
 			//ToDo: HOLY SHIT THIS IS AN OMGHUGE HACK! - JD

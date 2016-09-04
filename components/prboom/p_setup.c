@@ -52,7 +52,7 @@
 #include "v_video.h"
 #include "r_demo.h"
 #include "r_fps.h"
-
+#include "i_system.h"
 //
 // MAP related Lookup tables.
 // Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
@@ -1308,11 +1308,11 @@ static void P_AddLineToSector(line_t* li, sector_t* sector)
   fixed_t *bbox = (void*)sector->blockbox;
 
 //DIRTY HACK! KILL ASAP! WORK-AROUND FOR HARDWARE MEMORY CORRUPTION! - JD
-	if (((int)li->v1)<0x3f000000) {
+	if (!isValidPtr(li->v1)) {
 		lprintf(LO_WARN, "P_AddLineToSector: Memory corrupted -> li->v1 = %p\n:", li->v1);
 		li->v1=li->v2;
 	}
-	if (((int)li->v2)<0x3f000000) {
+	if (!isValidPtr(li->v2)) {
 		lprintf(LO_WARN, "P_AddLineToSector: Memory corrupted -> li->v2 = %p\n:", li->v2);
 		li->v2=li->v1;
 	}

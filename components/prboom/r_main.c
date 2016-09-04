@@ -242,6 +242,7 @@ angle_t R_PointToAngle2(fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
 //
 // killough 5/2/98: reformatted
 
+#include "rom/ets_sys.h"
 static void R_InitTextureMapping (void)
 {
   register int i,x;
@@ -274,6 +275,7 @@ static void R_InitTextureMapping (void)
             if (t > viewwidth+1)
               t = viewwidth+1;
         }
+//		ets_printf("Viewangle %d x %d\n", i, t);
       viewangletox[i] = t;
     }
 

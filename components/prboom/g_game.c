@@ -567,7 +567,7 @@ static void G_DoLoadLevel (void)
   Z_CheckHeap ();
 
   // clear cmd building stuff
-  memset (&gamekeydown, 0, sizeof(gamekeydown));
+  memset (&gamekeydown[0], 0, sizeof(gamekeydown));
   joyxmove = joyymove = 0;
   mousex = mousey = 0;
   special_event = 0; paused = false;

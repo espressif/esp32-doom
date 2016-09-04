@@ -144,7 +144,7 @@ const void* W_CacheLumpNum(int lump)
   if ((unsigned)lump >= (unsigned)numlumps)
     I_Error ("W_CacheLumpNum: %i >= numlumps",lump);
 #endif
-  if ((int)lumpinfo[lump].wadfile<0x3f000000) {
+  if (!isValidPtr(lumpinfo[lump].wadfile)) {
     I_Error ("W_CacheLumpNum: out of range %x",(int)lumpinfo[lump].wadfile);
     return NULL;
 	}

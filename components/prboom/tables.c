@@ -88,16 +88,16 @@ fixed_t * finecosine;
 //
 void R_LoadTrigTables(void)
 {
-	finetangent=(fixed_t*)SINETABL_dat;
-	finesine=(fixed_t*)SINETABL_dat;
-	tantoangle=(angle_t*)TANTOANG_dat;
+	finetangent=(fixed_t*)&SINETABL_dat[0];
+	finesine=(fixed_t*)&SINETABL_dat[0];
+	tantoangle=(angle_t*)&TANTOANG_dat[0];
 	finecosine = finesine + (FINEANGLES/4);
 
 #if 0
 	I_Error("Loading trig tables");
 	finetangent=malloc(4096*sizeof(fixed_t));
 	finesine=malloc(10240*sizeof(fixed_t));
-	tantoangle=malloc(2049*sizeof(fixed_t));
+	tantoangle=malloc(2049*sizeof(angle_t));
 	finecosine = finesine + (FINEANGLES/4);
   int lump;
   {
@@ -121,6 +121,7 @@ void R_LoadTrigTables(void)
       I_Error("R_LoadTrigTables: Invalid TANTOANG");
     W_ReadLump(lump,(unsigned char*)tantoangle);
   }
+#endif
   // Endianness correction - might still be non-portable, but is fast where possible
   {
     size_t n;
@@ -142,5 +143,4 @@ void R_LoadTrigTables(void)
     CORRECT_TABLE_ENDIAN(tantoangle);
     lprintf(LO_INFO, "corrected.");
   }
-#endif
 }

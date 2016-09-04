@@ -291,7 +291,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 // Clips the given segment
 // and adds any visible pieces to the line list.
 //
-
+#include "rom/ets_sys.h"
 static void R_AddLine (seg_t *line)
 {
   int      x1;
@@ -348,15 +348,17 @@ static void R_AddLine (seg_t *line)
   angle1 = (angle1+ANG90)>>ANGLETOFINESHIFT;
   angle2 = (angle2+ANG90)>>ANGLETOFINESHIFT;
 
+//HACK FOR WEIRD ANGLES - jd
+//	angle1&=4095;
+//	angle2&=4095;
+
   // killough 1/31/98: Here is where "slime trails" can SOMETIMES occur:
   x1 = viewangletox[angle1];
   x2 = viewangletox[angle2];
 
-	//HACK FOR CORRUPTED MEM - JD
-  if (x1<0) x1=0;
-  if (x1>320) x1=320;
-  if (x2<0) x2=0;
-  if (x2>320) x2=320;
+//	ets_printf("a1 %d x1 %d a2 %d x2 %d\n", angle1, x1, angle2, x2);
+
+
 
 #ifdef GL_DOOM
   // proff 11/99: we have to add these segs to avoid gaps in OpenGL

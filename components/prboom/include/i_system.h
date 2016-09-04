@@ -89,5 +89,6 @@ int I_Open(const char *wad, int flags);
 void *I_Mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
 int I_Munmap(void *addr, size_t length);
 
+int isValidPtr(void *ptr);
 
 #endif

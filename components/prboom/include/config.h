@@ -12,7 +12,7 @@
 //#define DOGS 0
 
 
-#define HAVE_STRLWR 1
+//#define HAVE_STRLWR 1
 
 /* Define to be the path where Doom WADs are stored */
 #define DOOMWADDIR ""
@@ -228,4 +228,6 @@
 
 
 #define atexit(a) 
-#define exit(a) assert(0)
+//#define exit(a) assert(a!=0)
+
+
