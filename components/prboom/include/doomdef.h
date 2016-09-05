@@ -133,7 +133,6 @@ typedef enum {
 // State updates, number of tics / second.
 
 //#define TICRATE          35
-
 #define TICRATE          1
 
 // The current state of the game: whether we are playing, gazing

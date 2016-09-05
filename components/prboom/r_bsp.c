@@ -349,8 +349,8 @@ static void R_AddLine (seg_t *line)
   angle2 = (angle2+ANG90)>>ANGLETOFINESHIFT;
 
 //HACK FOR WEIRD ANGLES - jd
-//	angle1&=4095;
-//	angle2&=4095;
+//	angle1/=2;
+//	angle2/=2;
 
   // killough 1/31/98: Here is where "slime trails" can SOMETIMES occur:
   x1 = viewangletox[angle1];

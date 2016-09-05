@@ -88,7 +88,7 @@ fixed_t * finecosine;
 //
 void R_LoadTrigTables(void)
 {
-	finetangent=(fixed_t*)&SINETABL_dat[0];
+	finetangent=(fixed_t*)&TANGTABL_dat[0];
 	finesine=(fixed_t*)&SINETABL_dat[0];
 	tantoangle=(angle_t*)&TANTOANG_dat[0];
 	finecosine = finesine + (FINEANGLES/4);

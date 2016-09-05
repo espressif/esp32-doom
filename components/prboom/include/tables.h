@@ -47,6 +47,7 @@
 #ifndef __TABLES__
 #define __TABLES__
 
+#include <stdint.h>
 #include "m_fixed.h"
 
 #define FINEANGLES              8192
@@ -68,7 +69,7 @@
 #define SLOPEBITS    11
 #define DBITS      (FRACBITS-SLOPEBITS)
 
-typedef unsigned angle_t;
+typedef uint32_t angle_t;
 
 // Load trig tables if needed
 void R_LoadTrigTables(void);

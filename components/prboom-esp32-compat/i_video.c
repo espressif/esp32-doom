@@ -54,6 +54,8 @@
 
 #include "rom/ets_sys.h"
 
+#include "driver/spi_lcd.h"
+
 int use_fullscreen=0;
 int use_doublebuffer=0;
 
@@ -137,38 +139,10 @@ static int newpal = 0;
 
 void I_FinishUpdate (void)
 {
-	int x, y;
-	char *chrs=" '.~+mM@";
 	uint16_t *scr=(uint16_t*)screens[0].data;
 #if 0
-  if (SDL_MUSTLOCK(screen)) {
-      int h;
-      byte *src;
-      byte *dest;
-
-      if (SDL_LockSurface(screen) < 0) {
-        lprintf(LO_INFO,"I_FinishUpdate: %s\n", SDL_GetError());
-        return;
-      }
-      dest=screen->pixels;
-      src=screens[0].data;
-      h=screen->h;
-      for (; h>0; h--)
-      {
-        memcpy(dest,src,SCREENWIDTH*V_GetPixelDepth());
-        dest+=screen->pitch;
-        src+=screens[0].byte_pitch;
-      }
-      SDL_UnlockSurface(screen);
-  }
-  /* Update the display buffer (flipping video pages if supported)
-   * If we need to change palette, that implicitely does a flip */
-  if (newpal != NO_PALETTE_CHANGE) {
-    I_UploadNewPalette(newpal);
-    newpal = NO_PALETTE_CHANGE;
-  }
-  SDL_Flip(screen);
-#endif
+	int x, y;
+	char *chrs=" '.~+mM@";
 	ets_printf("\033[1;1H");
 	for (y=0; y<240; y+=4) {
 		for (x=0; x<320; x+=2) {
@@ -176,7 +150,9 @@ void I_FinishUpdate (void)
 		}
 		ets_printf("\n");
 	}
-
+#else
+	ili9341_send_data(0,0,320,240,scr);
+#endif
 }
 
 void I_SetPalette (int pal)
@@ -186,6 +162,9 @@ void I_SetPalette (int pal)
 
 void I_PreInitGraphics(void)
 {
+#if 1
+	ili9341_init();
+#endif
 }
 
 
