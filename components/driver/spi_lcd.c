@@ -265,12 +265,37 @@ void ili9341_send_data(int x, int y, int width, int height, const uint16_t *data
 	LCD_WriteData(0);
 	LCD_WriteData(y+height);
 	LCD_WriteCommand(0x2C);
+/*
 	l=height*width;
 	for (i=0; i<l; i++) {
 		LCD_WriteData(*data>>8);
 		LCD_WriteData(*data&0xff);
 		data++;
 	}
+*/
+    LCD_SEL_DATA();
+
+	l=height*width;
+	while(l) {
+		unsigned char buf[64];
+		for (i=0; i<32; i++) {
+			buf[i*2]=data[i]>>8;
+			buf[i*2+1]=data[i]&0xff;
+		}
+		spi_data_t pDat;
+		pDat.cmd = 0;
+		pDat.cmdLen = 0;
+		pDat.addr = NULL;
+		pDat.addrLen = 0;
+		pDat.txDataLen = 64;
+		pDat.txData = (void*)buf;
+		pDat.rxDataLen = 0;
+
+		spi_master_send_data(SPI_NUM, &pDat);
+		l-=32;
+		data+=32;
+	}
+
 }
 
 

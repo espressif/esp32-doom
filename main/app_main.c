@@ -28,10 +28,13 @@ unsigned char *doom1waddata=(unsigned char *)(DOOMWAD_MMUPOS);
 
 extern void Cache_Flush(int);
 
+void mytest();
 
 void doomEngineTask(void *pvParameters)
 {
     char const *argv[]={"doom", NULL};
+	portENTER_CRITICAL_NESTED();
+	mytest();
     doom_main(1, argv);
 }
 
@@ -60,8 +63,38 @@ int IRAM_ATTR remapDoomWad(int zero, int one, int sixtyfour, int paddr, int vadd
 }
 #endif
 
+
+
+
+
+typedef enum{
+  XTAL_40M = 40,
+  XTAL_26M = 26,
+  XTAL_24M = 24,
+  XTAL_AUTO = 0
+} XTAL_FREQ;
+
+typedef enum{
+  CPU_80M = 1,
+  CPU_160M = 2,
+  CPU_240M = 3,
+} CPU_FREQ;
+
+void rtc_set_cpu_freq(XTAL_FREQ xtal_freq, CPU_FREQ cpu_freq);
+//void rtc_uart_div_modify(uint8_t uart_no, uint8_t pll_sel);
+// uart_no 0 : UART0
+//         1 : UART1 
+// pll_sel 0 : current SOC is XTAL
+//         1 : current SOC is PLL
+
+void phy_get_romfunc_addr();
+void uart_div_modify(int, int);
+
 void app_main()
 {
+  phy_get_romfunc_addr();
+  rtc_set_cpu_freq(XTAL_40M, CPU_160M);
+  uart_div_modify(0, (80000000 << 4) / 115200);
 
 //    int ret;
 	int x;
@@ -70,5 +103,5 @@ void app_main()
     for (x=0; x<32; x++) ets_printf("%02x ", doom1waddata[x]);
     ets_printf("\n");
 
-    xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 30480, NULL, 5, NULL, 0);
+    xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 32480, NULL, 5, NULL, 0);
 }

@@ -228,8 +228,8 @@ static int IsMarker(const char *marker, const char *name)
     (*name == *marker && !strncasecmp(name+1, marker, 7));
 }
 
-// killough 4/17/98: add namespace tags
 
+// killough 4/17/98: add namespace tags
 static void W_CoalesceMarkedResource(const char *start_marker,
                                      const char *end_marker, int li_namespace)
 {
@@ -237,6 +237,7 @@ static void W_CoalesceMarkedResource(const char *start_marker,
   size_t i, num_marked = 0, num_unmarked = 0;
   int is_marked = 0, mark_end = 0;
   lumpinfo_t *lump = lumpinfo;
+	volatile int p;
 	int x;
 
 	for (x=0; x<numlumps; x++) {
@@ -245,11 +246,10 @@ static void W_CoalesceMarkedResource(const char *start_marker,
 		}
 	}
 
-  for (i=numlumps; i--; lump++)
-    if (IsMarker(start_marker, lump->name))       // start marker found
-      { // If this is the first start marker, add start marker to marked lumps
-        if (!num_marked)
-          {
+  for (i=numlumps; i--; lump++) {
+    if (IsMarker(start_marker, lump->name)) {
+       // If this is the first start marker, add start marker to marked lumps
+        if (!num_marked) {
             strncpy(marked->name, start_marker, 8);
             marked->size = 0;  // killough 3/20/98: force size to be 0
             marked->li_namespace = ns_global;        // killough 4/17/98
@@ -257,26 +257,28 @@ static void W_CoalesceMarkedResource(const char *start_marker,
             num_marked = 1;
           }
         is_marked = 1;                            // start marking lumps
-      }
-    else
-      if (IsMarker(end_marker, lump->name))       // end marker found
-        {
+      } else if (IsMarker(end_marker, lump->name)) {
           mark_end = 1;                           // add end marker below
           is_marked = 0;                          // stop marking lumps
-        }
-      else
-        if (is_marked)                            // if we are marking lumps,
-          {                                       // move lump to marked list
+      } else if (is_marked)  {                           // if we are marking lumps,
+                                                 // move lump to marked list
             marked[num_marked] = *lump;
             marked[num_marked++].li_namespace = li_namespace;  // killough 4/17/98
-          }
-        else
-          lumpinfo[num_unmarked++] = *lump;       // else move down THIS list
+      } else {
+//		if (lump->wadfile && !isValidPtr(lump->wadfile)) {
+//		    I_Error ("Lump wad during error!");
+//		}
+          lumpinfo[num_unmarked]=*lump;       // else move down THIS list
+			num_unmarked++;
+	  }
+	}
+
 
   // Append marked list to end of unmarked list
   memcpy(&lumpinfo[num_unmarked], marked, num_marked * sizeof(*marked));
 
   free(marked);                                   // free marked list
+
 
   numlumps = num_unmarked + num_marked;           // new total number of lumps
 
@@ -284,6 +286,17 @@ static void W_CoalesceMarkedResource(const char *start_marker,
 		if (lumpinfo[x].wadfile && !isValidPtr(lumpinfo[x].wadfile)) {
 			lprintf(LO_INFO,"Lump wad error for %s at addr %p! Index=%d unmarked=%d marked=%d Should be %p is %p\n", 
 				lumpinfo[x].name, &lumpinfo[x].wadfile, x, num_unmarked, num_marked, lumpinfo[x+1].wadfile,lumpinfo[x].wadfile);
+			int j;
+			for (j=0; j<10; j++) {
+				lprintf(LO_INFO,"%08x ", ((uint32_t*)&lumpinfo[x])[j]);
+			}
+			lprintf(LO_INFO,"\n");
+
+			for (j=0; j<10; j++) {
+				lprintf(LO_INFO,"%08x ", ((uint32_t*)&lumpinfo[x-1])[j]);
+			}
+			lprintf(LO_INFO,"\n");
+
 			//ToDo: HOLY SHIT THIS IS AN OMGHUGE HACK! - JD
 			lumpinfo[x].wadfile=lumpinfo[x-1].wadfile;
 		}

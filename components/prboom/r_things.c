@@ -299,8 +299,9 @@ static vissprite_t *R_NewVisSprite(void)
       size_t num_vissprite_alloc_prev = num_vissprite_alloc;
 
       num_vissprite_alloc = num_vissprite_alloc ? num_vissprite_alloc*2 : 128;
+      lprintf(LO_DEBUG, "R_NewVisSprite: reallocing vissprites array to %d\n", num_vissprite_alloc);
       vissprites = realloc(vissprites,num_vissprite_alloc*sizeof(*vissprites));
-      
+
       //e6y: set all fields to zero
       memset(vissprites + num_vissprite_alloc_prev, 0,
         (num_vissprite_alloc - num_vissprite_alloc_prev)*sizeof(*vissprites));
