@@ -10,98 +10,43 @@
 #include "soc/io_mux_reg.h"
 #include "soc/efuse_reg.h"
 #include "soc/rtc_cntl_reg.h"
-#include "soc/timers_reg.h"
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include <psram.h>
+#include <stdlib.h>
+#include "esp_err.h"
+#include "nvs_flash.h"
+#include "esp_partition.h"
 
 #undef false
 #undef true
 #include "i_system.h"
 
-
-#define DOOMWAD_FLASHPOS 0x100000
-#define DOOMWAD_MMUPOS (0x3f400000+DOOMWAD_FLASHPOS-0x20000)
-
-unsigned char *doom1waddata=(unsigned char *)(DOOMWAD_MMUPOS);
+unsigned char *doom1waddata;
 
 extern void Cache_Flush(int);
-
-void mytest();
 
 void doomEngineTask(void *pvParameters)
 {
     char const *argv[]={"doom", NULL};
-	portENTER_CRITICAL_NESTED();
-	mytest();
     doom_main(1, argv);
 }
 
-#if 0
-//Assumes Doom1.wad (well, the stripped down version) is located at 0xC0000 in flash. ToDo: add partition for it
-//NOT USED ANYMORE. Doom now uses a custom bootloader that maps the entire memory instead of just the bit the app requests.
-int IRAM_ATTR remapDoomWad(int zero, int one, int sixtyfour, int paddr, int vaddr, int len, int sramaddr) 
-{
-    int ret;
-    Cache_Read_Disable(zero);
-    Cache_Read_Disable(one);
-    Cache_Flush(zero);
-    Cache_Flush(one);
-    ret=cache_flash_mmu_set( zero, zero, vaddr, paddr, sixtyfour, len );
-    ret=cache_flash_mmu_set( one , zero, vaddr, paddr, sixtyfour, len );
-    cache_sram_mmu_set(zero, zero, sramaddr,zero,sixtyfour/2,sixtyfour*2);
-    cache_sram_mmu_set(one, zero, sramaddr,zero,sixtyfour/2,sixtyfour*2);
-    REG_CLR_BIT( PRO_CACHE_CTRL1_REG, (DPORT_PRO_CACHE_MASK_IRAM0) | (DPORT_PRO_CACHE_MASK_IRAM1 & 0) | (DPORT_PRO_CACHE_MASK_IROM0 & 0) | DPORT_PRO_CACHE_MASK_DROM0 | DPORT_PRO_CACHE_MASK_DRAM1 );
-    REG_CLR_BIT( APP_CACHE_CTRL1_REG, (DPORT_APP_CACHE_MASK_IRAM0) | (DPORT_APP_CACHE_MASK_IRAM1 & 0) | (DPORT_APP_CACHE_MASK_IROM0 & 0) | DPORT_APP_CACHE_MASK_DROM0 | DPORT_APP_CACHE_MASK_DRAM1 );
-    Cache_Read_Enable( zero );
-    Cache_Read_Enable( one );
-	psram_enable(PsramCache_F80M_S80M);
-	
-//	asm("break.n 1");
-    return ret;
-}
-#endif
-
-
-
-
-
-typedef enum{
-  XTAL_40M = 40,
-  XTAL_26M = 26,
-  XTAL_24M = 24,
-  XTAL_AUTO = 0
-} XTAL_FREQ;
-
-typedef enum{
-  CPU_80M = 1,
-  CPU_160M = 2,
-  CPU_240M = 3,
-} CPU_FREQ;
-
-void rtc_set_cpu_freq(XTAL_FREQ xtal_freq, CPU_FREQ cpu_freq);
-//void rtc_uart_div_modify(uint8_t uart_no, uint8_t pll_sel);
-// uart_no 0 : UART0
-//         1 : UART1 
-// pll_sel 0 : current SOC is XTAL
-//         1 : current SOC is PLL
-
-void phy_get_romfunc_addr();
-void uart_div_modify(int, int);
 
 void app_main()
 {
-  phy_get_romfunc_addr();
-  rtc_set_cpu_freq(XTAL_40M, CPU_160M);
-  uart_div_modify(0, (80000000 << 4) / 115200);
+	int i;
+	const esp_partition_t* part;
+	spi_flash_mmap_handle_t hdoomwad;
+	esp_err_t err;
 
-//    int ret;
-	int x;
-//    ret=remapDoomWad(0, 1, 64, 0x20000, 0x3f400000, (1024*1024*4)/(64*1024), 0x3f800000);
-//    ets_printf("remapDoomWad: %x\n", ret);
-    for (x=0; x<32; x++) ets_printf("%02x ", doom1waddata[x]);
-    ets_printf("\n");
+	part=esp_partition_find_first(66, 6, NULL);
+	if (part==0) printf("Couldn't find bootrom part!\n");
+	err=esp_partition_mmap(part, 0, 3114091, SPI_FLASH_MMAP_DATA, (const void**)&doom1waddata, &hdoomwad);
+	if (err!=ESP_OK) printf("Couldn't map bootrom part!\n");
+
+	printf("Loaded wad okay, addr=%p\n", doom1waddata);
+	for (i=0; i<16; i++) printf("%x ", doom1waddata[i]);
 
     xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 32480, NULL, 5, NULL, 0);
 }

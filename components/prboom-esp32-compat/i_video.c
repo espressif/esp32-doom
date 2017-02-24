@@ -54,8 +54,6 @@
 
 #include "rom/ets_sys.h"
 
-#include "driver/spi_lcd.h"
-
 int use_fullscreen=0;
 int use_doublebuffer=0;
 
@@ -64,9 +62,6 @@ void I_StartTic (void)
 {
 }
 
-void I_StartFrame (void)
-{
-}
 
 static void I_InitInputs(void)
 {
@@ -132,6 +127,15 @@ void I_UpdateNoBlit (void)
 {
 }
 
+
+void I_StartFrame (void)
+{
+}
+
+
+static uint16_t *screena, *screenb;
+
+
 //
 // I_FinishUpdate
 //
@@ -140,7 +144,7 @@ static int newpal = 0;
 void I_FinishUpdate (void)
 {
 	uint16_t *scr=(uint16_t*)screens[0].data;
-#if 0
+#if 1
 	int x, y;
 	char *chrs=" '.~+mM@";
 	ets_printf("\033[1;1H");
@@ -162,7 +166,7 @@ void I_SetPalette (int pal)
 
 void I_PreInitGraphics(void)
 {
-#if 1
+#if 0
 	ili9341_init();
 #endif
 }
@@ -192,6 +196,11 @@ void I_SetRes(void)
   screens[4].byte_pitch = SCREENPITCH;
   screens[4].short_pitch = SCREENPITCH / V_GetModePixelDepth(VID_MODE16);
   screens[4].int_pitch = SCREENPITCH / V_GetModePixelDepth(VID_MODE32);
+
+  screena=malloc(SCREENPITCH*SCREENHEIGHT);
+  screenb=malloc(SCREENPITCH*SCREENHEIGHT);
+  screens[0].not_on_heap=false;
+  screens[0].data=screenb;
 
   lprintf(LO_INFO,"I_SetRes: Using resolution %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 }

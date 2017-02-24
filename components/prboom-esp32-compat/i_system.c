@@ -213,8 +213,5 @@ int isValidPtr(void *ptr) {
 	return 0;
 }
 
-void _exit(int a) {
-	assert(0);
-}
 
 
