@@ -22,6 +22,8 @@
 #undef true
 #include "i_system.h"
 
+#include "spi_lcd.h"
+
 unsigned char *doom1waddata;
 
 extern void Cache_Flush(int);
@@ -48,5 +50,6 @@ void app_main()
 	printf("Loaded wad okay, addr=%p\n", doom1waddata);
 	for (i=0; i<16; i++) printf("%x ", doom1waddata[i]);
 
+	spi_lcd_init();
     xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 32480, NULL, 5, NULL, 0);
 }

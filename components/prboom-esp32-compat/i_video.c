@@ -53,6 +53,8 @@
 #include "lprintf.h"
 
 #include "rom/ets_sys.h"
+#include "spi_lcd.h"
+
 
 int use_fullscreen=0;
 int use_doublebuffer=0;
@@ -144,7 +146,7 @@ static int newpal = 0;
 void I_FinishUpdate (void)
 {
 	uint16_t *scr=(uint16_t*)screens[0].data;
-#if 1
+#if 0
 	int x, y;
 	char *chrs=" '.~+mM@";
 	ets_printf("\033[1;1H");
@@ -154,9 +156,12 @@ void I_FinishUpdate (void)
 		}
 		ets_printf("\n");
 	}
-#else
-	ili9341_send_data(0,0,320,240,scr);
 #endif
+#if 1
+	spi_lcd_send(scr);
+#endif
+	//Flip framebuffers
+//	if (scr==screena) screens[0].data=screenb; else screens[0].data=screena;
 }
 
 void I_SetPalette (int pal)
@@ -197,10 +202,14 @@ void I_SetRes(void)
   screens[4].short_pitch = SCREENPITCH / V_GetModePixelDepth(VID_MODE16);
   screens[4].int_pitch = SCREENPITCH / V_GetModePixelDepth(VID_MODE32);
 
-  screena=malloc(SCREENPITCH*SCREENHEIGHT);
-  screenb=malloc(SCREENPITCH*SCREENHEIGHT);
-  screens[0].not_on_heap=false;
-  screens[0].data=screenb;
+  free(screena);
+  free(screenb);
+//  screena=malloc(SCREENPITCH*SCREENHEIGHT);
+//  screenb=malloc(SCREENPITCH*SCREENHEIGHT);
+//  screens[0].not_on_heap=false;
+//  screens[0].data=screenb;
+
+//  spi_lcd_init();
 
   lprintf(LO_INFO,"I_SetRes: Using resolution %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 }
