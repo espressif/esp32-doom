@@ -208,10 +208,5 @@ int access(const char *path, int atype) {
 }
 
 
-int isValidPtr(void *ptr) {
-	if (((int)ptr&0xff000000)==0x3f000000) return 1;
-	return 0;
-}
-
 
 

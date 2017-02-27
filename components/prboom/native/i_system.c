@@ -206,9 +206,3 @@ void I_SetAffinityMask(void)
 int access(const char *path, int atype) {
     return 1;
 }
-
-
-int isValidPtr(void *ptr) {
-	if (((long)ptr)>0x10000) return 1;
-	return 0;
-}

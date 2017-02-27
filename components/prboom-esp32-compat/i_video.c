@@ -202,8 +202,9 @@ void I_SetRes(void)
   screens[4].short_pitch = SCREENPITCH / V_GetModePixelDepth(VID_MODE16);
   screens[4].int_pitch = SCREENPITCH / V_GetModePixelDepth(VID_MODE32);
 
-  free(screena);
-  free(screenb);
+//Attempt at double-buffering. Does not work.
+//  free(screena);
+//  free(screenb);
 //  screena=malloc(SCREENPITCH*SCREENHEIGHT);
 //  screenb=malloc(SCREENPITCH*SCREENHEIGHT);
 //  screens[0].not_on_heap=false;

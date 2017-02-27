@@ -1307,15 +1307,6 @@ static void P_AddLineToSector(line_t* li, sector_t* sector)
 {
   fixed_t *bbox = (void*)sector->blockbox;
 
-//DIRTY HACK! KILL ASAP! WORK-AROUND FOR HARDWARE MEMORY CORRUPTION! - JD
-	if (!isValidPtr(li->v1)) {
-		lprintf(LO_WARN, "P_AddLineToSector: Memory corrupted -> li->v1 = %p\n:", li->v1);
-		li->v1=li->v2;
-	}
-	if (!isValidPtr(li->v2)) {
-		lprintf(LO_WARN, "P_AddLineToSector: Memory corrupted -> li->v2 = %p\n:", li->v2);
-		li->v2=li->v1;
-	}
   sector->lines[sector->linecount++] = li;
   M_AddToBox (bbox, li->v1->x, li->v1->y);
   M_AddToBox (bbox, li->v2->x, li->v2->y);

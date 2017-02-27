@@ -47,8 +47,8 @@ void app_main()
 	err=esp_partition_mmap(part, 0, 3114091, SPI_FLASH_MMAP_DATA, (const void**)&doom1waddata, &hdoomwad);
 	if (err!=ESP_OK) printf("Couldn't map bootrom part!\n");
 
-	printf("Loaded wad okay, addr=%p\n", doom1waddata);
-	for (i=0; i<16; i++) printf("%x ", doom1waddata[i]);
+//	printf("Loaded wad okay, addr=%p\n", doom1waddata);
+//	for (i=0; i<16; i++) printf("%x ", doom1waddata[i]);
 
 	spi_lcd_init();
     xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 32480, NULL, 5, NULL, 0);

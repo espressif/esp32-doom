@@ -240,11 +240,6 @@ static void W_CoalesceMarkedResource(const char *start_marker,
 	volatile int p;
 	int x;
 
-	for (x=0; x<numlumps; x++) {
-		if (lumpinfo[x].wadfile && !isValidPtr(lumpinfo[x].wadfile)) {
-		    I_Error ("Lump wad before error!");
-		}
-	}
 
   for (i=numlumps; i--; lump++) {
     if (IsMarker(start_marker, lump->name)) {
@@ -265,9 +260,6 @@ static void W_CoalesceMarkedResource(const char *start_marker,
             marked[num_marked] = *lump;
             marked[num_marked++].li_namespace = li_namespace;  // killough 4/17/98
       } else {
-//		if (lump->wadfile && !isValidPtr(lump->wadfile)) {
-//		    I_Error ("Lump wad during error!");
-//		}
           lumpinfo[num_unmarked]=*lump;       // else move down THIS list
 			num_unmarked++;
 	  }
@@ -281,26 +273,6 @@ static void W_CoalesceMarkedResource(const char *start_marker,
 
 
   numlumps = num_unmarked + num_marked;           // new total number of lumps
-
-	for (x=0; x<numlumps; x++) {
-		if (lumpinfo[x].wadfile && !isValidPtr(lumpinfo[x].wadfile)) {
-			lprintf(LO_INFO,"Lump wad error for %s at addr %p! Index=%d unmarked=%d marked=%d Should be %p is %p\n", 
-				lumpinfo[x].name, &lumpinfo[x].wadfile, x, num_unmarked, num_marked, lumpinfo[x+1].wadfile,lumpinfo[x].wadfile);
-			int j;
-			for (j=0; j<10; j++) {
-				lprintf(LO_INFO,"%08x ", ((uint32_t*)&lumpinfo[x])[j]);
-			}
-			lprintf(LO_INFO,"\n");
-
-			for (j=0; j<10; j++) {
-				lprintf(LO_INFO,"%08x ", ((uint32_t*)&lumpinfo[x-1])[j]);
-			}
-			lprintf(LO_INFO,"\n");
-
-			//ToDo: HOLY SHIT THIS IS AN OMGHUGE HACK! - JD
-			lumpinfo[x].wadfile=lumpinfo[x-1].wadfile;
-		}
-	}
 
 
   if (mark_end)                                   // add end marker

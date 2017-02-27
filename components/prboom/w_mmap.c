@@ -144,10 +144,6 @@ const void* W_CacheLumpNum(int lump)
   if ((unsigned)lump >= (unsigned)numlumps)
     I_Error ("W_CacheLumpNum: %i >= numlumps",lump);
 #endif
-  if (!isValidPtr(lumpinfo[lump].wadfile)) {
-    I_Error ("W_CacheLumpNum: out of range %x",(int)lumpinfo[lump].wadfile);
-    return NULL;
-	}
   return ((char*)mapped_wad[lumpinfo[lump].wadfile->handle]+lumpinfo[lump].position);
 }
 
