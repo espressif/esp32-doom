@@ -55,6 +55,7 @@
 #include "rom/ets_sys.h"
 #include "spi_lcd.h"
 
+#include "esp_heap_alloc_caps.h"
 
 int use_fullscreen=0;
 int use_doublebuffer=0;
@@ -70,49 +71,9 @@ static void I_InitInputs(void)
 }
 
 
+
 static void I_UploadNewPalette(int pal)
 {
-#if 0
-  // This is used to replace the current 256 colour cmap with a new one
-  // Used by 256 colour PseudoColor modes
-
-  // Array of SDL_Color structs used for setting the 256-colour palette
-  static SDL_Color* colours;
-  static int cachedgamma;
-  static size_t num_pals;
-
-  if (V_GetMode() == VID_MODEGL)
-    return;
-
-  if ((colours == NULL) || (cachedgamma != usegamma)) {
-    int pplump = W_GetNumForName("PLAYPAL");
-    int gtlump = (W_CheckNumForName)("GAMMATBL",ns_prboom);
-    register const byte * palette = W_CacheLumpNum(pplump);
-    register const byte * const gtable = (const byte *)W_CacheLumpNum(gtlump) + 256*(cachedgamma = usegamma);
-    register int i;
-
-    num_pals = W_LumpLength(pplump) / (3*256);
-    num_pals *= 256;
-
-    if (!colours) {
-      // First call - allocate and prepare colour array
-      colours = malloc(sizeof(*colours)*num_pals);
-    }
-
-    // set the colormap entries
-    for (i=0 ; (size_t)i<num_pals ; i++) {
-      colours[i].r = gtable[palette[0]];
-      colours[i].g = gtable[palette[1]];
-      colours[i].b = gtable[palette[2]];
-      palette += 3;
-    }
-
-    W_UnlockLumpNum(pplump);
-    W_UnlockLumpNum(gtlump);
-    num_pals/=256;
-  }
-
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -141,7 +102,6 @@ static uint16_t *screena, *screenb;
 //
 // I_FinishUpdate
 //
-static int newpal = 0;
 
 void I_FinishUpdate (void)
 {
@@ -164,15 +124,35 @@ void I_FinishUpdate (void)
 //	if (scr==screena) screens[0].data=screenb; else screens[0].data=screena;
 }
 
+int16_t lcdpal[256];
+
 void I_SetPalette (int pal)
 {
-  newpal = pal;
+	int i, r, g, b, v;
+	int pplump = W_GetNumForName("PLAYPAL");
+	const byte * palette = W_CacheLumpNum(pplump);
+	palette+=pal*(3*256);
+	for (i=0; i<255 ; i++) {
+		v=((palette[0]>>3)<<11)+((palette[1]>>2)<<5)+(palette[2]>>3);
+		lcdpal[i]=(v>>8)+(v<<8);
+//		lcdpal[i]=v;
+		palette += 3;
+	}
+	W_UnlockLumpNum(pplump);
 }
+
+
+unsigned char *screenbuf;
+
+#define INTERNAL_MEM_FB
+
 
 void I_PreInitGraphics(void)
 {
-#if 0
-	ili9341_init();
+	lprintf(LO_INFO, "preinitgfx");
+#ifdef INTERNAL_MEM_FB
+	screenbuf=pvPortMallocCaps(320*240, MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
+	assert(screenbuf);
 #endif
 }
 
@@ -207,8 +187,13 @@ void I_SetRes(void)
 //  free(screenb);
 //  screena=malloc(SCREENPITCH*SCREENHEIGHT);
 //  screenb=malloc(SCREENPITCH*SCREENHEIGHT);
-//  screens[0].not_on_heap=false;
-//  screens[0].data=screenb;
+
+
+#ifdef INTERNAL_MEM_FB
+  screens[0].not_on_heap=true;
+  screens[0].data=screenbuf;
+  assert(screens[0].data);
+#endif
 
 //  spi_lcd_init();
 
@@ -244,8 +229,8 @@ void I_UpdateVideoMode(void)
 
   lprintf(LO_INFO, "I_UpdateVideoMode: %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 
-    mode = VID_MODE16;
-//    mode = VID_MODE8;
+//    mode = VID_MODE16;
+    mode = VID_MODE8;
 
   V_InitMode(mode);
   V_DestroyUnusedTrueColorPalettes();

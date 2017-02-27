@@ -117,7 +117,7 @@ typedef enum {
 // can be bigger than the SCREENWIDTH depending on the size
 // of one pixel (8, 16 or 32 bit) and the padding at the
 // end of the line caused by hardware considerations
-#define SCREENPITCH (2*SCREENWIDTH)
+#define SCREENPITCH (1*SCREENWIDTH)
 
 // The maximum number of players, multiplayer/networking.
 #define MAXPLAYERS       4
@@ -132,8 +132,7 @@ typedef enum {
 
 // State updates, number of tics / second.
 
-//#define TICRATE          35
-#define TICRATE          1
+#define TICRATE          35
 
 // The current state of the game: whether we are playing, gazing
 // at the intermission screen, the game final animation, or a demo.

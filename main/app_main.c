@@ -30,8 +30,8 @@ extern void Cache_Flush(int);
 
 void doomEngineTask(void *pvParameters)
 {
-    char const *argv[]={"doom", NULL};
-    doom_main(1, argv);
+    char const *argv[]={"doom","-cout","ICWEFDA", NULL};
+    doom_main(3, argv);
 }
 
 

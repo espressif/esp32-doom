@@ -68,6 +68,10 @@
 #include "r_fps.h"
 #include "i_system.h"
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+
 #ifdef __GNUG__
 #pragma implementation "i_system.h"
 #endif
@@ -88,12 +92,12 @@ void I_EndDisplay(void)
 
 void I_uSleep(unsigned long usecs)
 {
+	vTaskDelay(usecs/1000);
 }
 
 
 int I_GetTime_RealTime (void)
 {
-  return realtime++;
   struct timeval tv;
   struct timezone tz;
   unsigned long thistimereply;
