@@ -73,6 +73,8 @@
 #endif
 #include "i_system.h"
 
+#include <sys/time.h>
+
 int realtime=0;
 
 int I_StartDisplay(void)
@@ -92,6 +94,16 @@ void I_uSleep(unsigned long usecs)
 int I_GetTime_RealTime (void)
 {
   return realtime++;
+  struct timeval tv;
+  struct timezone tz;
+  unsigned long thistimereply;
+
+  gettimeofday(&tv, &tz);
+
+  thistimereply = (tv.tv_sec * TICRATE + (tv.tv_usec * TICRATE) / 1000000);
+
+  return thistimereply;
+
 }
 
 fixed_t I_GetTimeFrac (void)
