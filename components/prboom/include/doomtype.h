@@ -88,6 +88,11 @@ typedef unsigned __int64 uint_64_t;
 #define NORETURN
 #endif
 
+//esp32
+#undef PATH_MAX
+#define PATH_MAX 32
+
+
 /* CPhipps - use limits.h instead of depreciated values.h */
 #include <limits.h>
 

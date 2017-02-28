@@ -59,6 +59,8 @@
 #include "r_plane.h"
 #include "v_video.h"
 #include "lprintf.h"
+#include "esp_attr.h"
+
 
 #define MAXVISPLANES 128    /* must be a power of 2 */
 
@@ -128,7 +130,7 @@ void R_InitPlanes (void)
 // BASIC PRIMITIVE
 //
 
-static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
+static void IRAM_ATTR R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
 {
   angle_t angle;
   fixed_t distance, length;
@@ -254,7 +256,7 @@ visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
 //
 // killough 2/28/98: Add offsets
 
-visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel,
+visplane_t IRAM_ATTR *R_FindPlane(fixed_t height, int picnum, int lightlevel,
                         fixed_t xoffs, fixed_t yoffs)
 {
   visplane_t *check;
@@ -336,7 +338,7 @@ static void R_MakeSpans(int x, unsigned int t1, unsigned int b1,
 
 // New function, by Lee Killough
 
-static void R_DoDrawPlane(visplane_t *pl)
+static void IRAM_ATTR R_DoDrawPlane(visplane_t *pl)
 {
   register int x;
   draw_column_vars_t dcvars;

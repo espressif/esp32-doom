@@ -44,6 +44,7 @@
 #include "i_video.h"
 #include "r_filter.h"
 #include "lprintf.h"
+#include "esp_attr.h"
 
 // Each screen is [SCREENWIDTH*SCREENHEIGHT];
 screeninfo_t screens[NUM_SCREENS];
@@ -253,7 +254,7 @@ void V_Init (void)
 // (indeed, laziness of the people who wrote the 'clones' of the original V_DrawPatch
 //  means that their inner loops weren't so well optimised, so merging code may even speed them).
 //
-static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
+static void IRAM_ATTR V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
         int cm, enum patch_translation_e flags)
 {
   const byte *trans;

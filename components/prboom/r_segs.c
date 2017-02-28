@@ -43,6 +43,8 @@
 #include "w_wad.h"
 #include "v_video.h"
 #include "lprintf.h"
+#include "esp_attr.h"
+
 
 // OPTIMIZE: closed two sided lines as single sided
 
@@ -115,7 +117,7 @@ static fixed_t R_ScaleFromGlobalAngle(angle_t visangle)
 // R_RenderMaskedSegRange
 //
 
-void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
+void IRAM_ATTR R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 {
   int      texnum;
   sector_t tempsec;      // killough 4/13/98
@@ -262,7 +264,7 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 #define HEIGHTUNIT (1<<HEIGHTBITS)
 static int didsolidcol; /* True if at least one column was marked solid */
 
-static void R_RenderSegLoop (void)
+static void IRAM_ATTR R_RenderSegLoop (void)
 {
   const rpatch_t *tex_patch;
   R_DrawColumn_f colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_STANDARD, drawvars.filterwall, drawvars.filterz);

@@ -1266,7 +1266,7 @@ typedef struct
 
 /* these are in info.c */
 extern state_t  *states;
-extern const char *sprnames[]; /* 1/17/98 killough - CPhipps - const */
+extern const char* sprnames[]; /* 1/17/98 killough - CPhipps - const */
 
 /********************************************************************
  * Thing enumeration -- must match info.c                           *
