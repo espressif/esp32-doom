@@ -96,6 +96,18 @@ void I_StartFrame (void)
 }
 
 
+int I_StartDisplay(void)
+{
+	spi_lcd_wait_finish();
+  return true;
+}
+
+void I_EndDisplay(void)
+{
+}
+
+
+
 static uint16_t *screena, *screenb;
 
 

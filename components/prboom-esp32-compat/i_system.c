@@ -81,14 +81,6 @@
 
 int realtime=0;
 
-int I_StartDisplay(void)
-{
-  return true;
-}
-
-void I_EndDisplay(void)
-{
-}
 
 void I_uSleep(unsigned long usecs)
 {
