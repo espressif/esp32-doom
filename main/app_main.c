@@ -24,6 +24,8 @@
 
 #include "spi_lcd.h"
 
+#include "memaccess_hist.h"
+
 unsigned char *doom1waddata;
 
 extern void Cache_Flush(int);
@@ -33,7 +35,6 @@ void doomEngineTask(void *pvParameters)
     char const *argv[]={"doom","-cout","ICWEFDA", NULL};
     doom_main(3, argv);
 }
-
 
 void app_main()
 {
@@ -49,6 +50,8 @@ void app_main()
 
 //	printf("Loaded wad okay, addr=%p\n", doom1waddata);
 //	for (i=0; i<16; i++) printf("%x ", doom1waddata[i]);
+	
+	memaccess_history_init(0x0);
 
 	spi_lcd_init();
     xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 32480, NULL, 5, NULL, 0);

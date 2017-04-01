@@ -45,23 +45,53 @@
 #include "i_joy.h"
 #include "lprintf.h"
 
+#include "psxcontroller.h"
+
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+
+volatile int joyVal=0;
+int oldJoyVal;
+
+int usejoystick;
 int joyleft;
 int joyright;
 int joyup;
 int joydown;
 
-int usejoystick;
-
-
-static void I_EndJoystick(void)
+void I_EndJoystick(void)
 {
   lprintf(LO_DEBUG, "I_EndJoystick : closing joystick\n");
 }
 
 void I_PollJoystick(void)
 {
+	int newJoyVal=joyVal;
+	event_t ev;
+	ev.type = ev_joystick;
+	ev.data1=0;
+	ev.data2=0;
+	ev.data3=0;
+	if ((newJoyVal&0x4000)==0) ev.data1|=1;
+	if ((newJoyVal&0x2000)==0) ev.data1|=2;
+	if ((newJoyVal&0x8000)==0) ev.data1|=4;
+	if ((newJoyVal&0x1000)==0) ev.data1|=8;
+
+	if ((newJoyVal&0x20)==0) ev.data2=120;
+	if ((newJoyVal&0x80)==0) ev.data2=-120;
+
+	if ((newJoyVal&0x40)==0) ev.data3=120;
+	if ((newJoyVal&0x10)==0) ev.data3=-120;
+
+	if (oldJoyVal!=newJoyVal) printf("Joy: %x\n", joyVal^0xffff);
+
+	oldJoyVal=newJoyVal;
+	D_PostEvent(&ev);
+
+
 #if 0
-  event_t ev;
   Sint16 axis_value;
 
   if (!usejoystick || (!joystick)) return;
@@ -80,8 +110,35 @@ void I_PollJoystick(void)
 
   D_PostEvent(&ev);
 #endif
+
 }
+
+
+void jsTask(void) {
+	psxcontrollerInit();
+	while(1) {
+		vTaskDelay(1);
+		joyVal=psxReadInput();
+	}
+}
+
+extern int     joybfire;
+extern int     joybstrafe;
+extern int     joybuse;
+extern int     joybspeed;
 
 void I_InitJoystick(void)
 {
+	usejoystick=1;
+	joyleft=1;
+	joyright=2;
+	joyup=3;
+	joydown=4;
+
+	joybfire=1;
+	joybuse=2;
+	joybstrafe=3;
+	joybspeed=0;
+
+	xTaskCreatePinnedToCore(&jsTask, "js", 3000, NULL, 4, NULL, 1);
 }

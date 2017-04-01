@@ -67,6 +67,7 @@
 #include "m_fixed.h"
 #include "r_fps.h"
 #include "i_system.h"
+#include "i_joy.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

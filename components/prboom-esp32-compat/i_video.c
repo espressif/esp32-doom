@@ -63,6 +63,7 @@ int use_doublebuffer=0;
 
 void I_StartTic (void)
 {
+	I_PollJoystick();
 }
 
 
@@ -229,6 +230,8 @@ void I_InitGraphics(void)
 
     /* Initialize the input system */
     I_InitInputs();
+	I_InitJoystick();
+
   }
 }
 
