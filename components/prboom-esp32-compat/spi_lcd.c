@@ -220,7 +220,7 @@ void IRAM_ATTR displayTask(void *arg) {
         .quadhd_io_num=-1
     };
     spi_device_interface_config_t devcfg={
-        .clock_speed_hz=40000000,               //Clock out at 40 MHz. Yes, that's heavily overclocked.
+        .clock_speed_hz=26000000,               //Clock out at 26 MHz. Yes, that's heavily overclocked.
         .mode=0,                                //SPI mode 0
         .spics_io_num=PIN_NUM_CS,               //CS pin
         .queue_size=10,                          //We want to be able to queue 7 transactions at a time
@@ -303,5 +303,9 @@ void spi_lcd_init(){
 	printf("spi_lcd_init()\n");
     dispSem=xSemaphoreCreateBinary();
     dispDoneSem=xSemaphoreCreateBinary();
+#if CONFIG_FREERTOS_UNICORE
 	xTaskCreatePinnedToCore(&displayTask, "display", 3000, NULL, 6, NULL, 0);
+#else
+	xTaskCreatePinnedToCore(&displayTask, "display", 3000, NULL, 6, NULL, 1);
+#endif
 }
