@@ -24,7 +24,6 @@
 
 #include "spi_lcd.h"
 
-#include "memaccess_hist.h"
 
 unsigned char *doom1waddata;
 
@@ -44,15 +43,14 @@ void app_main()
 	esp_err_t err;
 
 	part=esp_partition_find_first(66, 6, NULL);
-	if (part==0) printf("Couldn't find bootrom part!\n");
+	if (part==0) printf("Couldn't find wad part!\n");
 	err=esp_partition_mmap(part, 0, 3114091, SPI_FLASH_MMAP_DATA, (const void**)&doom1waddata, &hdoomwad);
-	if (err!=ESP_OK) printf("Couldn't map bootrom part!\n");
+	if (err!=ESP_OK) printf("Couldn't map wad part!\n");
 
 //	printf("Loaded wad okay, addr=%p\n", doom1waddata);
 //	for (i=0; i<16; i++) printf("%x ", doom1waddata[i]);
 	
-	memaccess_history_init(0x0);
 
 	spi_lcd_init();
-    xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 32480, NULL, 5, NULL, 0);
+	xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 23480, NULL, 5, NULL, 0);
 }

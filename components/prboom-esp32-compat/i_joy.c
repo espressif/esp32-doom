@@ -140,5 +140,5 @@ void I_InitJoystick(void)
 	joybstrafe=3;
 	joybspeed=0;
 
-	xTaskCreatePinnedToCore(&jsTask, "js", 3000, NULL, 4, NULL, 1);
+//	xTaskCreatePinnedToCore(&jsTask, "js", 3000, NULL, 4, NULL, 1);
 }

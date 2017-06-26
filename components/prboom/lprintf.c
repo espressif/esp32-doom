@@ -80,7 +80,7 @@ int lprintf(OutputLevels pri, const char *s, ...)
 #endif
   va_end(v);
 
-  r=printf("%s",msg);           /* select output at console */
+  r=ets_printf("%s",msg);           /* select output at console */
 
   return r;
 }

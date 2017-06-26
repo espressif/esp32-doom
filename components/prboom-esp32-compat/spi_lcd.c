@@ -18,14 +18,18 @@
 #include "esp_heap_alloc_caps.h"
 
 #define PIN_NUM_MISO 25
-#define PIN_NUM_MOSI 27
-//#define PIN_NUM_MOSI 23
+
+//#define PIN_NUM_MOSI 27
+#define PIN_NUM_MOSI 23
+
 #define PIN_NUM_CLK  19
 #define PIN_NUM_CS   22
 
 #define PIN_NUM_DC   21
 #define PIN_NUM_RST  18
 #define PIN_NUM_BCKL 5
+
+#define DOUBLE_BUFFER
 
 
 /*
@@ -36,6 +40,32 @@ typedef struct {
     uint8_t data[16];
     uint8_t databytes; //No of data in data; bit 7 = delay after set; 0xFF = end of cmds.
 } ili_init_cmd_t;
+
+
+//#define ST_LCD
+
+#ifdef ST_LCD
+
+static const ili_init_cmd_t ili_init_cmds[]={
+    {0x36, {(1<<5)|(1<<6)}, 1},
+    {0x3A, {0x55}, 1},
+    {0xB2, {0x0c, 0x0c, 0x00, 0x33, 0x33}, 5},
+    {0xB7, {0x45}, 1},
+    {0xBB, {0x2B}, 1},
+    {0xC0, {0x2C}, 1},
+    {0xC2, {0x01, 0xff}, 2},
+    {0xC3, {0x11}, 1},
+    {0xC4, {0x20}, 1},
+    {0xC6, {0x0f}, 1},
+    {0xD0, {0xA4, 0xA1}, 1},
+    {0xE0, {0xD0, 0x00, 0x05, 0x0E, 0x15, 0x0D, 0x37, 0x43, 0x47, 0x09, 0x15, 0x12, 0x16, 0x19}, 14},
+    {0xE1, {0xD0, 0x00, 0x05, 0x0D, 0x0C, 0x06, 0x2D, 0x44, 0x40, 0x0E, 0x1C, 0x18, 0x16, 0x19}, 14},
+    {0x11, {0}, 0x80},
+    {0x29, {0}, 0x80},
+    {0, {0}, 0xff}
+};
+
+#else
 
 static const ili_init_cmd_t ili_init_cmds[]={
     {0xCF, {0x00, 0x83, 0X30}, 3},
@@ -64,6 +94,8 @@ static const ili_init_cmd_t ili_init_cmds[]={
     {0x29, {0}, 0x80},
     {0, {0}, 0xff},
 };
+
+#endif
 
 static spi_device_handle_t spi;
 
@@ -120,8 +152,11 @@ void ili_init(spi_device_handle_t spi)
 
     //Send all the commands
     while (ili_init_cmds[cmd].databytes!=0xff) {
+        uint8_t dmdata[16];
         ili_cmd(spi, ili_init_cmds[cmd].cmd);
-        ili_data(spi, ili_init_cmds[cmd].data, ili_init_cmds[cmd].databytes&0x1F);
+        //Need to copy from flash to DMA'able memory
+        memcpy(dmdata, ili_init_cmds[cmd].data, 16);
+        ili_data(spi, dmdata, ili_init_cmds[cmd].databytes&0x1F);
         if (ili_init_cmds[cmd].databytes&0x80) {
             vTaskDelay(100 / portTICK_RATE_MS);
         }
@@ -194,7 +229,12 @@ void send_header_cleanup(spi_device_handle_t spi)
 }
 
 
+#ifndef DOUBLE_BUFFER
 volatile static uint16_t *currFbPtr=NULL;
+#else
+//Warning: This gets squeezed into IRAM.
+static uint32_t *currFbPtr=NULL;
+#endif
 SemaphoreHandle_t dispSem = NULL;
 SemaphoreHandle_t dispDoneSem = NULL;
 
@@ -242,7 +282,7 @@ void IRAM_ATTR displayTask(void *arg) {
 		dmamem[x]=pvPortMallocCaps(MEM_PER_TRANS*2, MALLOC_CAP_DMA);
 		assert(dmamem[x]);
 		memset(&trans[x], 0, sizeof(spi_transaction_t));
-		trans[x].length=MEM_PER_TRANS*4;
+		trans[x].length=MEM_PER_TRANS*2;
 		trans[x].user=(void*)1;
 		trans[x].tx_buffer=&dmamem[x];
 	}
@@ -250,22 +290,34 @@ void IRAM_ATTR displayTask(void *arg) {
 
 	while(1) {
 		xSemaphoreTake(dispSem, portMAX_DELAY);
-//		printf("Display task: frame.\n");
+		printf("Display task: frame.\n");
+#ifndef DOUBLE_BUFFER
 		uint8_t *myData=(uint8_t*)currFbPtr;
+#endif
 
 		send_header_start(spi, 0, 0, 320, 240);
 		send_header_cleanup(spi);
 		for (x=0; x<320*240; x+=MEM_PER_TRANS) {
+#ifdef DOUBLE_BUFFER
+			for (i=0; i<MEM_PER_TRANS; i+=4) {
+				uint32_t d=currFbPtr[(x+i)/4];
+				dmamem[idx][i+0]=lcdpal[(d>>0)&0xff];
+				dmamem[idx][i+1]=lcdpal[(d>>8)&0xff];
+				dmamem[idx][i+2]=lcdpal[(d>>16)&0xff];
+				dmamem[idx][i+3]=lcdpal[(d>>24)&0xff];
+			}
+#else
 			for (i=0; i<MEM_PER_TRANS; i++) {
 				dmamem[idx][i]=lcdpal[myData[i]];
 			}
+			myData+=MEM_PER_TRANS;
+#endif
 			trans[idx].length=MEM_PER_TRANS*16;
 			trans[idx].user=(void*)1;
 			trans[idx].tx_buffer=dmamem[idx];
 			ret=spi_device_queue_trans(spi, &trans[idx], portMAX_DELAY);
 			assert(ret==ESP_OK);
 
-			myData+=MEM_PER_TRANS;
 			idx++;
 			if (idx>=NO_SIM_TRANS) idx=0;
 
@@ -295,7 +347,11 @@ void spi_lcd_wait_finish() {
 }
 
 void spi_lcd_send(uint16_t *scr) {
+#ifdef DOUBLE_BUFFER
+	memcpy(currFbPtr, scr, 320*240);
+#else
 	currFbPtr=scr;
+#endif
 	xSemaphoreGive(dispSem);
 }
 
@@ -303,6 +359,9 @@ void spi_lcd_init(){
 	printf("spi_lcd_init()\n");
     dispSem=xSemaphoreCreateBinary();
     dispDoneSem=xSemaphoreCreateBinary();
+#ifdef DOUBLE_BUFFER
+	currFbPtr=pvPortMallocCaps(320*240, MALLOC_CAP_32BIT);
+#endif
 #if CONFIG_FREERTOS_UNICORE
 	xTaskCreatePinnedToCore(&displayTask, "display", 3000, NULL, 6, NULL, 0);
 #else
