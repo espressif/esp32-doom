@@ -85,40 +85,20 @@ void I_PollJoystick(void)
 	if ((newJoyVal&0x40)==0) ev.data3=120;
 	if ((newJoyVal&0x10)==0) ev.data3=-120;
 
-	if (oldJoyVal!=newJoyVal) printf("Joy: %x\n", joyVal^0xffff);
 
 	oldJoyVal=newJoyVal;
 	D_PostEvent(&ev);
 
-
-#if 0
-  Sint16 axis_value;
-
-  if (!usejoystick || (!joystick)) return;
-  ev.type = ev_joystick;
-  ev.data1 =
-    (SDL_JoystickGetButton(joystick, 0)<<0) |
-    (SDL_JoystickGetButton(joystick, 1)<<1) |
-    (SDL_JoystickGetButton(joystick, 2)<<2) |
-    (SDL_JoystickGetButton(joystick, 3)<<3);
-  axis_value = SDL_JoystickGetAxis(joystick, 0) / 3000;
-  if (abs(axis_value)<10) axis_value=0;
-  ev.data2 = axis_value;
-  axis_value = SDL_JoystickGetAxis(joystick, 1) / 3000;
-  if (abs(axis_value)<10) axis_value=0;
-  ev.data3 = axis_value;
-
-  D_PostEvent(&ev);
-#endif
-
 }
 
 
-void jsTask(void) {
-	psxcontrollerInit();
+void jsTask(void *arg) {
+	printf("Joystick task starting.\n");
 	while(1) {
-		vTaskDelay(1);
+		vTaskDelay(20/portTICK_PERIOD_MS);
 		joyVal=psxReadInput();
+//		if (joyVal!=oldJoyVal) printf("Joy: %x\n", joyVal^0xffff);
+		oldJoyVal=joyVal;
 	}
 }
 
@@ -129,6 +109,7 @@ extern int     joybspeed;
 
 void I_InitJoystick(void)
 {
+	lprintf(LO_INFO, "I_InitJoystick: Initializing game pad.\n");
 	usejoystick=1;
 	joyleft=1;
 	joyright=2;
@@ -139,6 +120,11 @@ void I_InitJoystick(void)
 	joybuse=2;
 	joybstrafe=3;
 	joybspeed=0;
-
-//	xTaskCreatePinnedToCore(&jsTask, "js", 3000, NULL, 4, NULL, 1);
 }
+
+void jsInit() {
+	//Starts the js task
+	psxcontrollerInit();
+	xTaskCreatePinnedToCore(&jsTask, "js", 5000, NULL, 7, NULL, 0);
+}
+

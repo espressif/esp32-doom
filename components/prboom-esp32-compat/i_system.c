@@ -72,6 +72,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "esp_partition.h"
+#include "esp_spi_flash.h"
 
 #ifdef __GNUG__
 #pragma implementation "i_system.h"
@@ -88,6 +90,17 @@ void I_uSleep(unsigned long usecs)
 	vTaskDelay(usecs/1000);
 }
 
+static unsigned long getMsTicks() {
+  struct timeval tv;
+  struct timezone tz;
+  unsigned long thistimereply;
+
+  gettimeofday(&tv, &tz);
+
+  //convert to ms
+  unsigned long now = tv.tv_usec/1000+tv.tv_sec*1000;
+  return now;
+}
 
 int I_GetTime_RealTime (void)
 {
@@ -103,18 +116,43 @@ int I_GetTime_RealTime (void)
 
 }
 
+const int displaytime=0;
+
 fixed_t I_GetTimeFrac (void)
 {
-  return 0;
+  unsigned long now;
+  fixed_t frac;
+
+
+  now = getMsTicks();
+
+  if (tic_vars.step == 0)
+    return FRACUNIT;
+  else
+  {
+    frac = (fixed_t)((now - tic_vars.start + displaytime) * FRACUNIT / tic_vars.step);
+    if (frac < 0)
+      frac = 0;
+    if (frac > FRACUNIT)
+      frac = FRACUNIT;
+    return frac;
+  }
 }
+
 
 void I_GetTime_SaveMS(void)
 {
+  if (!movement_smooth)
+    return;
+
+  tic_vars.start = getMsTicks();
+  tic_vars.next = (unsigned int) ((tic_vars.start * tic_vars.msec + 1.0f) / tic_vars.msec);
+  tic_vars.step = tic_vars.next - tic_vars.start;
 }
 
 unsigned long I_GetRandomTimeSeed(void)
 {
-	return 4;
+	return 4; //per https://xkcd.com/221/
 }
 
 const char* I_GetVersionString(char* buf, size_t sz)
@@ -131,22 +169,20 @@ const char* I_SigString(char* buf, size_t sz, int signum)
 extern unsigned char *doom1waddata;
 
 typedef struct {
-	unsigned char *mem;
+	const esp_partition_t* part;
 	int offset;
 	int size;
 } FileDesc;
 
-
-static FileDesc fds[64];
-
+static FileDesc fds[32];
 
 int I_Open(const char *wad, int flags) {
 	int x=3;
-	while (fds[x].mem!=NULL) x++;
+	while (fds[x].part!=NULL) x++;
 	if (strcmp(wad, "DOOM1.WAD")==0) {
-		fds[x].mem=doom1waddata;
+		fds[x].part=esp_partition_find_first(66, 6, NULL);
 		fds[x].offset=0;
-		fds[x].size=3370127; //ToDo: de-hardcode - JD
+		fds[x].size=fds[x].part->size;
 	} else {
 		lprintf(LO_INFO, "I_Open: open %s failed\n", wad);
 		return -1;
@@ -165,32 +201,97 @@ int I_Lseek(int ifd, off_t offset, int whence) {
 	return fds[ifd].offset;
 }
 
-
-void I_Read(int ifd, void* vbuf, size_t sz)
-{
-	if (fds[ifd].offset+sz>fds[ifd].size) {
-		sz=fds[ifd].size-fds[ifd].offset;
-	}
-	memcpy(vbuf, fds[ifd].mem+fds[ifd].offset, sz);
-	fds[ifd].offset+=sz;
-}
-
 int I_Filelength(int ifd)
 {
 	return fds[ifd].size;
 }
 
+typedef struct {
+	spi_flash_mmap_handle_t handle;
+	void *addr;
+	int offset;
+	size_t len;
+	int used;
+} MmapHandle;
+
+#define NO_MMAP_HANDLES 192
+static MmapHandle mmapHandle[NO_MMAP_HANDLES];
+
+static int nextHandle=0;
+static int getFreeHandle() {
+	int n=NO_MMAP_HANDLES;
+	while (mmapHandle[nextHandle].used!=0 && n!=0) {
+		nextHandle++;
+		if (nextHandle==NO_MMAP_HANDLES) nextHandle=0;
+		n--;
+	}
+	if (n==0) {
+		lprintf(LO_ERROR, "I_Mmap: More mmaps than NO_MMAP_HANDLES!");
+		exit(0);
+	}
+	
+	if (mmapHandle[nextHandle].addr) {
+		spi_flash_munmap(mmapHandle[nextHandle].handle);
+		mmapHandle[nextHandle].addr=NULL;
+	}
+	int r=nextHandle;
+	nextHandle++;
+	if (nextHandle==NO_MMAP_HANDLES) nextHandle=0;
+
+	return r;
+
+}
 
 void *I_Mmap(void *addr, size_t length, int prot, int flags, int ifd, off_t offset) {
-	lprintf(LO_INFO, "I_Mmap: mmapped offset %d\n", (int)offset);
-	return fds[ifd].mem+offset;
+	int i;
+	esp_err_t err;
+	void *retaddr=NULL;
+
+	for (i=0; i<NO_MMAP_HANDLES; i++) {
+		if (mmapHandle[i].offset==offset && mmapHandle[i].len==length) {
+			mmapHandle[i].used++;
+			return mmapHandle[i].addr;
+		}
+	}
+
+	i=getFreeHandle();
+
+//	lprintf(LO_INFO, "I_Mmap: mmaping offset %d size %d handle %d\n", (int)offset, (int)length, i);
+	err=esp_partition_mmap(fds[ifd].part, offset, length, SPI_FLASH_MMAP_DATA, (const void**)&retaddr, &mmapHandle[i].handle);
+	mmapHandle[i].addr=retaddr;
+	mmapHandle[i].len=length;
+	mmapHandle[i].used=1;
+	mmapHandle[i].offset=offset;
+
+	if (err!=ESP_OK) {
+		lprintf(LO_ERROR, "I_Mmap: Can't mmap: %d!", err);
+		return NULL;
+	}
+
+	return retaddr;
 }
 
 
 int I_Munmap(void *addr, size_t length) {
+	int i;
+	for (i=0; i<NO_MMAP_HANDLES; i++) {
+		if (mmapHandle[i].addr==addr && mmapHandle[i].len==length) break;
+	}
+	if (i==NO_MMAP_HANDLES) {
+		lprintf(LO_ERROR, "I_Mmap: Freeing non-mmapped address/len combo!");
+		exit(0);
+	}
+//	lprintf(LO_INFO, "I_Mmap: freeing handle %d\n", i);
+	mmapHandle[i].used--;
 	return 0;
 }
 
+void I_Read(int ifd, void* vbuf, size_t sz)
+{
+	uint8_t *d=I_Mmap(NULL, sz, 0, 0, ifd, fds[ifd].offset);
+	memcpy(vbuf, d, sz);
+	I_Munmap(d, sz);
+}
 
 const char *I_DoomExeDir(void)
 {

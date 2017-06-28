@@ -25,6 +25,8 @@
 #include "spi_lcd.h"
 
 
+extern void jsInit();
+
 unsigned char *doom1waddata;
 
 extern void Cache_Flush(int);
@@ -52,5 +54,6 @@ void app_main()
 	
 
 	spi_lcd_init();
-	xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 23480, NULL, 5, NULL, 0);
+	jsInit();
+	xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 22480, NULL, 5, NULL, 0);
 }

@@ -53,11 +53,14 @@
 
 static struct {
   void *cache;
+  void *mmapadr;
 #ifdef TIMEDIAG
   int locktic;
 #endif
   int locks;
 } *cachelump;
+
+
 
 #ifdef HEAPDUMP
 void W_PrintLump(FILE* fp, void* p) {
@@ -85,58 +88,33 @@ static void W_ReportLocks(void)
 }
 #endif
 
-
-void ** mapped_wad;
-
 void W_InitCache(void)
 {
-  int maxfd = 0;
   // set up caching
   cachelump = calloc(numlumps, sizeof *cachelump);
   if (!cachelump)
     I_Error ("W_Init: Couldn't allocate lumpcache");
 
+
+  for (int i=0; i<numlumps; i++)  cachelump[i].locks = -1;
+
 #ifdef TIMEDIAG
   atexit(W_ReportLocks);
 #endif
 
-  {
-    int i;
-    for (i=0; i<numlumps; i++)
-      if (lumpinfo[i].wadfile)
-        if (lumpinfo[i].wadfile->handle > maxfd) maxfd = lumpinfo[i].wadfile->handle;
-  }
-  mapped_wad = calloc(maxfd+1,sizeof *mapped_wad);
-  {
-    int i;
-    for (i=0; i<numlumps; i++) {
-      cachelump[i].locks = -1;
-      if (lumpinfo[i].wadfile) {
-        int fd = lumpinfo[i].wadfile->handle;
-        if (!mapped_wad[fd])
-          if ((mapped_wad[fd] = I_Mmap(NULL,I_Filelength(fd),PROT_READ,MAP_SHARED,fd,0)) == MAP_FAILED) 
-            I_Error("W_InitCache: failed to mmap");
-      }
-    }
-  }
 }
+
 
 void W_DoneCache(void)
 {
-  {
-    int i;
-    for (i=0; i<numlumps; i++)
-      if (lumpinfo[i].wadfile) {
-        int fd = lumpinfo[i].wadfile->handle;
-        if (mapped_wad[fd]) {
-          if (I_Munmap(mapped_wad[fd],I_Filelength(fd))) 
-            I_Error("W_DoneCache: failed to munmap");
-          mapped_wad[fd] = NULL;
-        }
-      }
-  }
-  free(mapped_wad);
+    //ToDo... if we ever unload a wad
 }
+
+/*
+As far as I can see, the lump scheme is reference counted... W_CacheLumpNum loads up a lump, W_LockLumpNum increases the lock count,
+W_UnlockLumpNum decreases it and if it's -1 it can un-mmap the lump. NOTE: W_LockLumpNum is not used in the current code.
+*/
+
 
 const void* W_CacheLumpNum(int lump)
 {
@@ -144,7 +122,8 @@ const void* W_CacheLumpNum(int lump)
   if ((unsigned)lump >= (unsigned)numlumps)
     I_Error ("W_CacheLumpNum: %i >= numlumps",lump);
 #endif
-  return ((char*)mapped_wad[lumpinfo[lump].wadfile->handle]+lumpinfo[lump].position);
+	cachelump[lump].mmapadr=I_Mmap(NULL, W_LumpLength(lump), 0, 0, lumpinfo[lump].wadfile->handle, lumpinfo[lump].position);
+	return (char*)cachelump[lump].mmapadr;
 }
 
 /*
@@ -188,9 +167,11 @@ const void* W_LockLumpNum(int lump)
 }
 
 void W_UnlockLumpNum(int lump) {
-  if (cachelump[lump].locks == -1)
-    return; // this lump is memory mapped
-
+  if (cachelump[lump].locks == -1) {
+    // this lump is memory mapped
+    I_Munmap(cachelump[lump].mmapadr, W_LumpLength(lump));
+    return;
+  }
 #ifdef SIMPLECHECKS
   if (cachelump[lump].locks == 0)
     lprintf(LO_DEBUG, "W_UnlockLumpNum: Excess unlocks on %8s\n",

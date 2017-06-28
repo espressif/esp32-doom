@@ -484,8 +484,12 @@ static struct
     },
 
     {
+/*
       {D_SetPageName, "HELP2"},
       {D_SetPageName, "HELP2"},
+*/
+      {D_SetPageName, NULL},
+      {D_SetPageName, NULL},
       {D_SetPageName, "CREDIT"},
       {D_DrawTitle1,  "TITLEPIC"},
     },

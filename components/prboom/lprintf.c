@@ -65,14 +65,28 @@ int cons_output_mask = -1;        /* all output enabled */
 #define MAX_MESSAGE_SIZE 2048
 
 
+//Esp32 doesn't use the 2K-sized stack-allocated string but directly passes args to vprintf.
+#if 1
+int lprintf(OutputLevels pri, const char *s, ...) {
+  va_list v;
+  va_start(v,s);
+  vprintf(s,v);
+  va_end(v);
+  return 0;
+}
+#endif
+
+
+#if 0
 int lprintf(OutputLevels pri, const char *s, ...)
 {
   int r=0;
-  char msg[MAX_MESSAGE_SIZE];
+//  char msg[MAX_MESSAGE_SIZE];
   int lvl=pri;
 
   va_list v;
   va_start(v,s);
+
 #ifdef HAVE_VSNPRINTF
   vsnprintf(msg,sizeof(msg),s,v);         /* print message in buffer  */
 #else
@@ -80,10 +94,11 @@ int lprintf(OutputLevels pri, const char *s, ...)
 #endif
   va_end(v);
 
-  r=ets_printf("%s",msg);           /* select output at console */
+//  r=ets_printf("%s",msg);           /* select output at console */
 
   return r;
 }
+#endif
 
 /*
  * I_Error

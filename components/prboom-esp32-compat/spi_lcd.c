@@ -42,7 +42,7 @@ typedef struct {
 } ili_init_cmd_t;
 
 
-//#define ST_LCD
+#define ST_LCD
 
 #ifdef ST_LCD
 
@@ -238,8 +238,8 @@ static uint32_t *currFbPtr=NULL;
 SemaphoreHandle_t dispSem = NULL;
 SemaphoreHandle_t dispDoneSem = NULL;
 
-#define NO_SIM_TRANS 5
-#define MEM_PER_TRANS 1024
+#define NO_SIM_TRANS 5 //Amount of SPI transfers to queue in parallel
+#define MEM_PER_TRANS 1024*3 //in 16-bit words
 
 extern int16_t lcdpal[256];
 
@@ -257,13 +257,14 @@ void IRAM_ATTR displayTask(void *arg) {
         .mosi_io_num=PIN_NUM_MOSI,
         .sclk_io_num=PIN_NUM_CLK,
         .quadwp_io_num=-1,
-        .quadhd_io_num=-1
+        .quadhd_io_num=-1,
+        .max_transfer_sz=(MEM_PER_TRANS*2)+16
     };
     spi_device_interface_config_t devcfg={
         .clock_speed_hz=26000000,               //Clock out at 26 MHz. Yes, that's heavily overclocked.
         .mode=0,                                //SPI mode 0
         .spics_io_num=PIN_NUM_CS,               //CS pin
-        .queue_size=10,                          //We want to be able to queue 7 transactions at a time
+        .queue_size=NO_SIM_TRANS,               //We want to be able to queue this many transfers
         .pre_cb=ili_spi_pre_transfer_callback,  //Specify pre-transfer callback to handle D/C line
     };
 
@@ -278,6 +279,7 @@ void IRAM_ATTR displayTask(void *arg) {
     //Initialize the LCD
     ili_init(spi);
 
+	//We're going to do a fair few transfers in parallel. Set them all up.
 	for (x=0; x<NO_SIM_TRANS; x++) {
 		dmamem[x]=pvPortMallocCaps(MEM_PER_TRANS*2, MALLOC_CAP_DMA);
 		assert(dmamem[x]);
@@ -290,7 +292,7 @@ void IRAM_ATTR displayTask(void *arg) {
 
 	while(1) {
 		xSemaphoreTake(dispSem, portMAX_DELAY);
-		printf("Display task: frame.\n");
+//		printf("Display task: frame.\n");
 #ifndef DOUBLE_BUFFER
 		uint8_t *myData=(uint8_t*)currFbPtr;
 #endif
@@ -328,7 +330,9 @@ void IRAM_ATTR displayTask(void *arg) {
 				inProgress++;
 			}
 		}
+#ifndef DOUBLE_BUFFER
 		xSemaphoreGive(dispDoneSem);
+#endif
 		while(inProgress) {
 			ret=spi_device_get_trans_result(spi, &rtrans, portMAX_DELAY);
 			assert(ret==ESP_OK);
@@ -343,19 +347,22 @@ void IRAM_ATTR displayTask(void *arg) {
 #include    <xtensa/simcall.h>
 
 void spi_lcd_wait_finish() {
+#ifndef DOUBLE_BUFFER
 	xSemaphoreTake(dispDoneSem, portMAX_DELAY);
+#endif
 }
 
 void spi_lcd_send(uint16_t *scr) {
 #ifdef DOUBLE_BUFFER
 	memcpy(currFbPtr, scr, 320*240);
+	//Theoretically, also should double-buffer the lcdpal array... ahwell.
 #else
 	currFbPtr=scr;
 #endif
 	xSemaphoreGive(dispSem);
 }
 
-void spi_lcd_init(){    
+void spi_lcd_init() {
 	printf("spi_lcd_init()\n");
     dispSem=xSemaphoreCreateBinary();
     dispDoneSem=xSemaphoreCreateBinary();
@@ -363,8 +370,8 @@ void spi_lcd_init(){
 	currFbPtr=pvPortMallocCaps(320*240, MALLOC_CAP_32BIT);
 #endif
 #if CONFIG_FREERTOS_UNICORE
-	xTaskCreatePinnedToCore(&displayTask, "display", 3000, NULL, 6, NULL, 0);
+	xTaskCreatePinnedToCore(&displayTask, "display", 6000, NULL, 6, NULL, 0);
 #else
-	xTaskCreatePinnedToCore(&displayTask, "display", 3000, NULL, 6, NULL, 1);
+	xTaskCreatePinnedToCore(&displayTask, "display", 6000, NULL, 6, NULL, 1);
 #endif
 }
