@@ -43,7 +43,7 @@
 #include "r_draw.h"
 #include "d_main.h"
 #include "d_event.h"
-#include "i_joy.h"
+#include "gamepad.h"
 #include "i_video.h"
 #include "z_zone.h"
 #include "s_sound.h"
@@ -63,7 +63,7 @@ int use_doublebuffer=0;
 
 void I_StartTic (void)
 {
-	I_PollJoystick();
+	gamepadPoll();
 }
 
 
@@ -230,7 +230,7 @@ void I_InitGraphics(void)
 
     /* Initialize the input system */
     I_InitInputs();
-	I_InitJoystick();
+	gamepadInit();
 
   }
 }

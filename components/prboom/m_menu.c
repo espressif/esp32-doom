@@ -954,16 +954,16 @@ enum
 menuitem_t OptionsMenu[]=
 {
   // killough 4/6/98: move setup to be a sub-menu of OPTIONs
-  {1,"M_GENERL", M_General, 'g'},      // killough 10/98
-  {1,"M_SETUP",  M_Setup,   's'},                          // phares 3/21/98
-  {1,"M_ENDGAM", M_EndGame,'e'},
-  {1,"M_MESSG",  M_ChangeMessages,'m'},
+  {1,"", M_General, 'g'},      // killough 10/98
+  {1,"",  M_Setup,   's'},                          // phares 3/21/98
+  {1,"", M_EndGame,'e'},
+  {1,"",  M_ChangeMessages,'m'},
   /*    {1,"M_DETAIL",  M_ChangeDetail,'g'},  unused -- killough */
-  {2,"M_SCRNSZ", M_SizeDisplay,'s'},
+  {2,"", M_SizeDisplay,'s'},
   {-1,"",0},
-  {1,"M_MSENS",  M_ChangeSensitivity,'m'},
+  {1,"",  M_ChangeSensitivity,'m'},
   /* {-1,"",0},  replaced with submenu -- killough */
-  {1,"M_SVOL",   M_Sound,'s'}
+  {1,"",   M_Sound,'s'}
 };
 
 menu_t OptionsDef =

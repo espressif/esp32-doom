@@ -17,23 +17,32 @@
 #include "driver/gpio.h"
 #include "esp_heap_alloc_caps.h"
 
+#include "sdkconfig.h"
+
+
+#if 0
 #define PIN_NUM_MISO 25
-
-//#define PIN_NUM_MOSI 27
 #define PIN_NUM_MOSI 23
-
 #define PIN_NUM_CLK  19
 #define PIN_NUM_CS   22
-
 #define PIN_NUM_DC   21
 #define PIN_NUM_RST  18
 #define PIN_NUM_BCKL 5
+#else
+#define PIN_NUM_MOSI CONFIG_HW_LCD_MOSI_GPIO
+#define PIN_NUM_CLK  CONFIG_HW_LCD_CLK_GPIO
+#define PIN_NUM_CS   CONFIG_HW_LCD_CS_GPIO
+#define PIN_NUM_DC   CONFIG_HW_LCD_DC_GPIO
+#define PIN_NUM_RST  CONFIG_HW_LCD_RESET_GPIO
+#define PIN_NUM_BCKL CONFIG_HW_LCD_BL_GPIO
+#endif
 
+//You want this, especially at higher framerates. The 2nd buffer is allocated in iram anyway, so isn't really in the way.
 #define DOUBLE_BUFFER
 
 
 /*
- The ILI9341 needs a bunch of command/argument values to be initialized. They are stored in this struct.
+ The LCD needs a bunch of command/argument values to be initialized. They are stored in this struct.
 */
 typedef struct {
     uint8_t cmd;
@@ -42,9 +51,7 @@ typedef struct {
 } ili_init_cmd_t;
 
 
-#define ST_LCD
-
-#ifdef ST_LCD
+#if (CONFIG_HW_LCD_TYPE == 1)
 
 static const ili_init_cmd_t ili_init_cmds[]={
     {0x36, {(1<<5)|(1<<6)}, 1},
@@ -65,7 +72,10 @@ static const ili_init_cmd_t ili_init_cmds[]={
     {0, {0}, 0xff}
 };
 
-#else
+#endif
+
+#if (CONFIG_HW_LCD_TYPE == 0)
+
 
 static const ili_init_cmd_t ili_init_cmds[]={
     {0xCF, {0x00, 0x83, 0X30}, 3},
@@ -164,7 +174,12 @@ void ili_init(spi_device_handle_t spi)
     }
 
     ///Enable backlight
+#if CONFIG_HW_INV_BL
     gpio_set_level(PIN_NUM_BCKL, 0);
+#else
+    gpio_set_level(PIN_NUM_BCKL, 1);
+#endif
+
 }
 
 
@@ -253,7 +268,7 @@ void IRAM_ATTR displayTask(void *arg) {
 
     esp_err_t ret;
     spi_bus_config_t buscfg={
-        .miso_io_num=PIN_NUM_MISO,
+        .miso_io_num=-1,
         .mosi_io_num=PIN_NUM_MOSI,
         .sclk_io_num=PIN_NUM_CLK,
         .quadwp_io_num=-1,
