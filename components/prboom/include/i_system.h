@@ -80,6 +80,8 @@ int doom_main(int argc, char const * const * argv);
 
 int I_Lseek(int fd, off_t offset, int whence);
 int I_Open(const char *wad, int flags);
+void I_Close(int fd);
+
 
 //HACK mmap support, w_mmap.c
 #define PROT_READ 1

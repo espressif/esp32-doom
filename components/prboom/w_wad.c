@@ -126,8 +126,6 @@ char *AddDefaultExtension(char *path, const char *ext)
 //
 // proff - changed using pointer to wadfile_info_t
 
-extern unsigned char *doom1waddata;
-
 
 static void W_AddFile(wadfile_info_t *wadfile) 
 // killough 1/31/98: static, const

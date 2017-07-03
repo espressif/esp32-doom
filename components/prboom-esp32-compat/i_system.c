@@ -206,6 +206,11 @@ int I_Filelength(int ifd)
 	return fds[ifd].size;
 }
 
+void I_Close(int fd) {
+	fds[fd].part=NULL;
+}
+
+
 typedef struct {
 	spi_flash_mmap_handle_t handle;
 	void *addr;
@@ -256,7 +261,7 @@ void *I_Mmap(void *addr, size_t length, int prot, int flags, int ifd, off_t offs
 
 	i=getFreeHandle();
 
-//	lprintf(LO_INFO, "I_Mmap: mmaping offset %d size %d handle %d\n", (int)offset, (int)length, i);
+	//lprintf(LO_INFO, "I_Mmap: mmaping offset %d size %d handle %d\n", (int)offset, (int)length, i);
 	err=esp_partition_mmap(fds[ifd].part, offset, length, SPI_FLASH_MMAP_DATA, (const void**)&retaddr, &mmapHandle[i].handle);
 	mmapHandle[i].addr=retaddr;
 	mmapHandle[i].len=length;
@@ -264,7 +269,7 @@ void *I_Mmap(void *addr, size_t length, int prot, int flags, int ifd, off_t offs
 	mmapHandle[i].offset=offset;
 
 	if (err!=ESP_OK) {
-		lprintf(LO_ERROR, "I_Mmap: Can't mmap: %d!", err);
+		lprintf(LO_ERROR, "I_Mmap: Can't mmap: %x (len=%d)!", err, length);
 		return NULL;
 	}
 

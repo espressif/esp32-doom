@@ -602,7 +602,6 @@ static const char *D_dehout(void)
 
 
 
-extern unsigned char *doom1waddata;
 //
 // CheckIWAD
 //
@@ -622,8 +621,10 @@ static void CheckIWAD(const char *iwadname,GameMode_t *gmode,boolean *hassec)
 //  {
     int ud=0,rg=0,sw=0,cm=0,sc=0;
       wadinfo_t header;
+	int fd;
 	{
-	memcpy(&header, doom1waddata, sizeof(header));
+	fd=I_Open(iwadname, 0);
+	I_Read(fd, &header, sizeof(header));
       // read IWAD header
       if (!strncmp(header.identification, "IWAD", 4))
       {
@@ -639,7 +640,8 @@ static void CheckIWAD(const char *iwadname,GameMode_t *gmode,boolean *hassec)
 //            fread (fileinfo, sizeof(filelump_t), length, fp) != length ||
 //            fclose(fp))
 //          I_Error("CheckIWAD: failed to read directory %s",iwadname);
-		memcpy(fileinfo, doom1waddata+header.infotableofs, sizeof(filelump_t)*length);
+		I_Lseek(fd, header.infotableofs, SEEK_SET);
+		I_Read(fd, fileinfo, sizeof(filelump_t)*length);
 
 
         // scan directory for levelname lumps
@@ -673,6 +675,8 @@ static void CheckIWAD(const char *iwadname,GameMode_t *gmode,boolean *hassec)
       }
       else // missing IWAD tag in header
         I_Error("CheckIWAD: IWAD tag %s not present", iwadname);
+
+      I_Close(fd);
     }
 //else // error from open call
 //      I_Error("CheckIWAD: Can't open IWAD %s", iwadname);
@@ -694,6 +698,7 @@ static void CheckIWAD(const char *iwadname,GameMode_t *gmode,boolean *hassec)
       *gmode = registered;
     else if (sw>=9)
       *gmode = shareware;
+
 //  }
 //  else // error from access call
 //    I_Error("CheckIWAD: IWAD %s not readable", iwadname);

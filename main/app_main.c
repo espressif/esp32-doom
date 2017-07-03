@@ -1,3 +1,17 @@
+// Copyright 2016-2017 Espressif Systems (Shanghai) PTE LTD
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include "esp_attr.h"
 
 #include "rom/cache.h"
@@ -27,9 +41,6 @@
 
 extern void jsInit();
 
-unsigned char *doom1waddata;
-
-extern void Cache_Flush(int);
 
 void doomEngineTask(void *pvParameters)
 {
@@ -46,12 +57,6 @@ void app_main()
 
 	part=esp_partition_find_first(66, 6, NULL);
 	if (part==0) printf("Couldn't find wad part!\n");
-	err=esp_partition_mmap(part, 0, 3114091, SPI_FLASH_MMAP_DATA, (const void**)&doom1waddata, &hdoomwad);
-	if (err!=ESP_OK) printf("Couldn't map wad part!\n");
-
-//	printf("Loaded wad okay, addr=%p\n", doom1waddata);
-//	for (i=0; i<16; i++) printf("%x ", doom1waddata[i]);
-	
 
 	spi_lcd_init();
 	jsInit();
