@@ -238,13 +238,22 @@ static int getFreeHandle() {
 	if (mmapHandle[nextHandle].addr) {
 		spi_flash_munmap(mmapHandle[nextHandle].handle);
 		mmapHandle[nextHandle].addr=NULL;
+//		printf("mmap: freeing handle %d\n", nextHandle);
 	}
 	int r=nextHandle;
 	nextHandle++;
 	if (nextHandle==NO_MMAP_HANDLES) nextHandle=0;
 
 	return r;
+}
 
+static void freeUnusedMmaps() {
+	for (int i=0; i<NO_MMAP_HANDLES; i++) {
+		if (!mmapHandle[i].used) {
+			spi_flash_munmap(mmapHandle[i].handle);
+			mmapHandle[i].addr=NULL;
+		}
+	}
 }
 
 void *I_Mmap(void *addr, size_t length, int prot, int flags, int ifd, off_t offset) {
@@ -263,6 +272,11 @@ void *I_Mmap(void *addr, size_t length, int prot, int flags, int ifd, off_t offs
 
 	//lprintf(LO_INFO, "I_Mmap: mmaping offset %d size %d handle %d\n", (int)offset, (int)length, i);
 	err=esp_partition_mmap(fds[ifd].part, offset, length, SPI_FLASH_MMAP_DATA, (const void**)&retaddr, &mmapHandle[i].handle);
+	if (err==ESP_ERR_NO_MEM) {
+		lprintf(LO_ERROR, "I_Mmap: No free address space. Cleaning up unused cached mmaps...\n");
+		freeUnusedMmaps();
+		err=esp_partition_mmap(fds[ifd].part, offset, length, SPI_FLASH_MMAP_DATA, (const void**)&retaddr, &mmapHandle[i].handle);
+	}
 	mmapHandle[i].addr=retaddr;
 	mmapHandle[i].len=length;
 	mmapHandle[i].used=1;
