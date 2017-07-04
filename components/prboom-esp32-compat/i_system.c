@@ -219,7 +219,7 @@ typedef struct {
 	int used;
 } MmapHandle;
 
-#define NO_MMAP_HANDLES 192
+#define NO_MMAP_HANDLES 128
 static MmapHandle mmapHandle[NO_MMAP_HANDLES];
 
 static int nextHandle=0;
@@ -249,9 +249,11 @@ static int getFreeHandle() {
 
 static void freeUnusedMmaps() {
 	for (int i=0; i<NO_MMAP_HANDLES; i++) {
-		if (!mmapHandle[i].used) {
+		//Check if handle is not in use but is mapped.
+		if (mmapHandle[i].used==0 && mmapHandle[i].addr!=NULL) {
 			spi_flash_munmap(mmapHandle[i].handle);
 			mmapHandle[i].addr=NULL;
+			printf("Freeing handle %d\n", i);
 		}
 	}
 }
