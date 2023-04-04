@@ -4,6 +4,9 @@ ESP32-DOOM, a port of PrBoom to the ESP32
 This is a port of PrBoom, which is a port of the original 1993 ID software hit game Doom, to the
 ESP32. It runs on an ESP32 which has 4MiB of flash and 4MiB of PSRAM connected.
 
+This version is an adaptation from original https://github.com/espressif/esp32-doom.git to run using IDF 4.x in a ESP-WROVER-KIT board.
+There are messages from WDT, but it doesn't make the application fail.
+
 Warning
 -------
 
