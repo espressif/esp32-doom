@@ -1,0 +1,4 @@
+build/
+sdkconfig.old
+*.o
+components/prboom/native/doom
