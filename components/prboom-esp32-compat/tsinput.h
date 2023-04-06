@@ -1,0 +1,2 @@
+void tsJsInputInit();
+int tsJsInputGet();

@@ -1,0 +1,9 @@
+How to get these files?
+
+- Grab and compile https://github.com/coelckers/wadext
+- Extract mus and genmidi.lmp files from doom1.wad using wadext
+- Convert mus files to imf format using imfcreator - https://github.com/adambiser/imf-creator
+  Make sure to use the genmidi.lmp extracted from the doom file
+  e.g. ./midi2imf.py -b genmidi.lmp -gm2 file.mus imf0
+
+
