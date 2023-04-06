@@ -183,6 +183,12 @@ int I_Open(const char *wad, int flags) {
 		fds[x].part=esp_partition_find_first(66, 6, NULL);
 		fds[x].offset=0;
 		fds[x].size=fds[x].part->size;
+		printf("Opened doom1.wad, part size is %d, fd is %d\n", fds[x].size, x);
+	} else if (strcmp(wad, "prboom.wad")==0) {
+		fds[x].part=esp_partition_find_first(66, 7, NULL);
+		fds[x].offset=0;
+		fds[x].size=fds[x].part->size;
+		printf("Opened prboom.wad, part size is %d, fd is %d\n", fds[x].size, x);
 	} else {
 		lprintf(LO_INFO, "I_Open: open %s failed\n", wad);
 		return -1;
@@ -216,6 +222,7 @@ typedef struct {
 	void *addr;
 	int offset;
 	size_t len;
+	const esp_partition_t *part;
 	int used;
 } MmapHandle;
 
@@ -265,7 +272,7 @@ void *I_Mmap(void *addr, size_t length, int prot, int flags, int ifd, off_t offs
 	void *retaddr=NULL;
 
 	for (i=0; i<NO_MMAP_HANDLES; i++) {
-		if (mmapHandle[i].offset==offset && mmapHandle[i].len==length) {
+		if (mmapHandle[i].offset==offset && mmapHandle[i].len==length && mmapHandle[i].part==fds[ifd].part) {
 			mmapHandle[i].used++;
 			return mmapHandle[i].addr;
 		}
@@ -273,7 +280,7 @@ void *I_Mmap(void *addr, size_t length, int prot, int flags, int ifd, off_t offs
 
 	i=getFreeHandle();
 
-	//lprintf(LO_INFO, "I_Mmap: mmaping offset %d size %d handle %d\n", (int)offset, (int)length, i);
+//	lprintf(LO_INFO, "I_Mmap: mmaping offset %d size %d handle %d part @%x\n", (int)offset, (int)length, i, fds[ifd].part->address);
 	err=esp_partition_mmap(fds[ifd].part, offset, length, SPI_FLASH_MMAP_DATA, (const void**)&retaddr, &mmapHandle[i].handle);
 	if (err==ESP_ERR_NO_MEM) {
 		lprintf(LO_ERROR, "I_Mmap: No free address space. Cleaning up unused cached mmaps...\n");
@@ -284,6 +291,7 @@ void *I_Mmap(void *addr, size_t length, int prot, int flags, int ifd, off_t offs
 	mmapHandle[i].len=length;
 	mmapHandle[i].used=1;
 	mmapHandle[i].offset=offset;
+	mmapHandle[i].part=fds[ifd].part;
 
 	if (err!=ESP_OK) {
 		lprintf(LO_ERROR, "I_Mmap: Can't mmap: %x (len=%d)!", err, length);

@@ -72,10 +72,15 @@ SRCS
   "w_wad.c"
   "z_bmalloc.c"
   "z_zone.c"
+  "dbopl.c"
+  "i_audio.c"
+  "i_sound.c"
 
 INCLUDE_DIRS
   "." "include"
 
 PRIV_REQUIRES
   prboom-wad-tables
+  prboom-imfs
 )
+

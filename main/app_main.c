@@ -31,6 +31,7 @@
 #include "esp_err.h"
 #include "nvs_flash.h"
 #include "esp_partition.h"
+#include "spi_flash_mmap.h"
 
 #undef false
 #undef true
@@ -57,6 +58,8 @@ void app_main()
 
 	part=esp_partition_find_first(66, 6, NULL);
 	if (part==0) printf("Couldn't find wad part!\n");
+	part=esp_partition_find_first(66, 7, NULL);
+	if (part==0) printf("Couldn't find prboom wad part!\n");
 
 	spi_lcd_init();
 	jsInit();

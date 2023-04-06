@@ -858,6 +858,7 @@ static void IdentifyVersion (void)
       //jff 9/3/98 use logical output routine
       lprintf(LO_WARN,"Unknown Game Version, may not work\n");
     D_AddFile(iwad,source_iwad);
+	D_AddFile("prboom.wad",source_pre);//source_iwad);
     free(iwad);
   }
   else
@@ -1342,9 +1343,6 @@ static void D_DoomMainSetup(void)
     nomusicparm = nosound || M_CheckParm("-nomusic");
     nosfxparm   = nosound || M_CheckParm("-nosfx");
   }
-	//Hardcode music and sound disabled -- JD
-    nomusicparm=true;
-    nosfxparm=true;
   //jff end of sound/music command line parms
 
   // killough 3/2/98: allow -nodraw -noblit generally

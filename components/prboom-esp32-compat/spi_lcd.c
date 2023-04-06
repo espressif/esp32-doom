@@ -28,13 +28,13 @@
 
 
 #if 1
-#define PIN_NUM_MISO 25
-#define PIN_NUM_MOSI 23
-#define PIN_NUM_CLK  19
-#define PIN_NUM_CS   22
-#define PIN_NUM_DC   21
-#define PIN_NUM_RST  18
-#define PIN_NUM_BCKL 5
+#define PIN_NUM_MISO -1
+#define PIN_NUM_MOSI 6
+#define PIN_NUM_CLK  7
+#define PIN_NUM_CS   5
+#define PIN_NUM_DC   4
+#define PIN_NUM_RST  48
+#define PIN_NUM_BCKL 45
 #else
 #define PIN_NUM_MOSI CONFIG_HW_LCD_MOSI_GPIO
 #define PIN_NUM_CLK  CONFIG_HW_LCD_CLK_GPIO
@@ -61,8 +61,7 @@ typedef struct {
 #if (CONFIG_HW_LCD_TYPE == 1)
 
 static const ili_init_cmd_t ili_init_cmds[]={
-    {0x36, {(1<<5)|(1<<6)}, 1},
-    {0x3A, {0x55}, 1},
+/*
     {0xB2, {0x0c, 0x0c, 0x00, 0x33, 0x33}, 5},
     {0xB7, {0x45}, 1},
     {0xBB, {0x2B}, 1},
@@ -74,8 +73,12 @@ static const ili_init_cmd_t ili_init_cmds[]={
     {0xD0, {0xA4, 0xA1}, 1},
     {0xE0, {0xD0, 0x00, 0x05, 0x0E, 0x15, 0x0D, 0x37, 0x43, 0x47, 0x09, 0x15, 0x12, 0x16, 0x19}, 14},
     {0xE1, {0xD0, 0x00, 0x05, 0x0D, 0x0C, 0x06, 0x2D, 0x44, 0x40, 0x0E, 0x1C, 0x18, 0x16, 0x19}, 14},
-    {0x11, {0}, 0x80},
-    {0x29, {0}, 0x80},
+*/
+
+    {0x3A, {0x55}, 1}, //colmod
+    {0x36, {(1<<7)|(0<<5)|(1<<6)|(1<<3)}, 1}, //madctl
+    {0x11, {0}, 0x80}, //slpout
+    {0x29, {0}, 0x80}, //dispon
     {0, {0}, 0xff}
 };
 
@@ -83,8 +86,8 @@ static const ili_init_cmd_t ili_init_cmds[]={
 
 #if (CONFIG_HW_LCD_TYPE == 0)
 
-
 static const ili_init_cmd_t ili_init_cmds[]={
+
     {0xCF, {0x00, 0x83, 0X30}, 3},
     {0xED, {0x64, 0x03, 0X12, 0X81}, 4},
     {0xE8, {0x85, 0x01, 0x79}, 3},
@@ -155,6 +158,13 @@ void ili_spi_pre_transfer_callback(spi_transaction_t *t)
 //Initialize the display
 void ili_init(spi_device_handle_t spi) 
 {
+    ///Enable backlight We do this first as for some hardware this enables the LCD power as well.
+#if CONFIG_HW_INV_BL
+    gpio_set_level(PIN_NUM_BCKL, 0);
+#else
+    gpio_set_level(PIN_NUM_BCKL, 1);
+#endif
+
     int cmd=0;
     //Initialize non-SPI GPIOs
     gpio_set_direction(PIN_NUM_DC, GPIO_MODE_OUTPUT);
@@ -163,9 +173,9 @@ void ili_init(spi_device_handle_t spi)
 
     //Reset the display
     gpio_set_level(PIN_NUM_RST, 0);
-    vTaskDelay(100 / portTICK_RATE_MS);
+    vTaskDelay(pdMS_TO_TICKS(100));
     gpio_set_level(PIN_NUM_RST, 1);
-    vTaskDelay(100 / portTICK_RATE_MS);
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     //Send all the commands
     while (ili_init_cmds[cmd].databytes!=0xff) {
@@ -175,18 +185,10 @@ void ili_init(spi_device_handle_t spi)
         memcpy(dmdata, ili_init_cmds[cmd].data, 16);
         ili_data(spi, dmdata, ili_init_cmds[cmd].databytes&0x1F);
         if (ili_init_cmds[cmd].databytes&0x80) {
-            vTaskDelay(100 / portTICK_RATE_MS);
+            vTaskDelay(pdMS_TO_TICKS(100));
         }
         cmd++;
     }
-
-    ///Enable backlight
-#if CONFIG_HW_INV_BL
-    gpio_set_level(PIN_NUM_BCKL, 0);
-#else
-    gpio_set_level(PIN_NUM_BCKL, 1);
-#endif
-
 }
 
 
@@ -257,8 +259,8 @@ volatile static uint16_t *currFbPtr=NULL;
 //Warning: This gets squeezed into IRAM.
 static uint32_t *currFbPtr=NULL;
 #endif
-xSemaphoreHandle dispSem = NULL;
-xSemaphoreHandle dispDoneSem = NULL;
+SemaphoreHandle_t dispSem = NULL;
+SemaphoreHandle_t dispDoneSem = NULL;
 
 #define NO_SIM_TRANS 5 //Amount of SPI transfers to queue in parallel
 #define MEM_PER_TRANS 1024*3 //in 16-bit words
@@ -293,10 +295,10 @@ void IRAM_ATTR displayTask(void *arg) {
 	printf("*** Display task starting.\n");
 
     //Initialize the SPI bus
-    ret=spi_bus_initialize(HSPI_HOST, &buscfg, 1);
+    ret=spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
     assert(ret==ESP_OK);
     //Attach the LCD to the SPI bus
-    ret=spi_bus_add_device(HSPI_HOST, &devcfg, &spi);
+    ret=spi_bus_add_device(SPI2_HOST, &devcfg, &spi);
     assert(ret==ESP_OK);
     //Initialize the LCD
     ili_init(spi);

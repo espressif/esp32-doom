@@ -67,7 +67,7 @@ extern int sound_inited;
 
 int snd_card=1;
 int mus_card=1;
-#define RATE (11025)
+#define RATE (22050)
 int snd_samplerate=RATE;
 
 typedef int32_t fixed_pt_t; //24.8 fixed point format
@@ -137,7 +137,7 @@ static void snd_cb(int16_t *buf, int len) {
 				//increase, unload if end
 				slot[i].pos+=slot[i].rate_inc;
 				if (slot[i].pos > slot[i].len) {
-					printf("Slot %d done\n", i);
+//					printf("Slot %d done\n", i);
 					slot[i].samp=NULL;
 				}
 			}
@@ -173,7 +173,7 @@ int lumpnum_for_sndid(int id) {
 	sprintf(namebuf, "ds%s", S_sfx[id].name);
 	namebuf_upper(namebuf);
 	int r=W_GetNumForName(namebuf);
-	printf("lumpnum_for_sndid: id %d is %s -> lump %d\n", id, namebuf, r);
+//	printf("lumpnum_for_sndid: id %d is %s -> lump %d\n", id, namebuf, r);
 	return r;
 }
 
@@ -182,18 +182,19 @@ int I_StartSound(int id, int channel, int vol, int sep, int pitch, int prio) {
 	if ((channel < 0) || (channel >= NO_SLOT))
 		return -1;
 
-	printf("STUB: I_StartSound id=%d channel=%d vol=%d\n", id, channel, vol);
 	dmx_samp_t *snd=(dmx_samp_t*)W_CacheLumpNum(lumpnum_for_sndid(id));
 	if (snd->format_no!=3) {
 		printf("I_StartSound: unknown format %d\n", snd->format_no);
 		return -1;
 	}
+	sndhw_lock();
 	slot[channel].samp=NULL;
 	slot[channel].vol=vol;
 	slot[channel].rate_inc=TO_FIXED(snd->samp_rate)/RATE;
 	slot[channel].len=TO_FIXED(snd->samp_ct);
 	slot[channel].pos=0;
 	slot[channel].samp=&snd->samples[0];
+	sndhw_unlock();
 	return channel;
 }
 
@@ -227,6 +228,7 @@ void I_InitMusic(void) {
 void I_PlaySong(int handle, int looping) {
     if(handle == mus_None) return;
 	
+	sndhw_lock();
 	char namebuf[9];
 	sprintf(namebuf, "d_%s", S_music[handle].name);
 	namebuf_upper(namebuf);
@@ -236,6 +238,7 @@ void I_PlaySong(int handle, int looping) {
 	imfplayer.pos=0;
 	imfplayer.len=W_LumpLength(lump)/sizeof(imf_packet_t);
 	imfplayer.delay_to_go=0;
+	sndhw_unlock();
 }
 
 

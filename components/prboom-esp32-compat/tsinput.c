@@ -51,9 +51,9 @@ const v_but_t v_but[]={
 	{64, 120+64, 0x40}, //down
 	{32, 120, 0x80}, //left
 	{32+64, 120, 0x20}, //right
-	{320-32, 120+64 , 0x4000},
+	{320-32, 120+64 , 0x1000},
 	{320-32, 120, 0x2000},
-	{320+32, 120-64, 0x1000},
+	{320-32, 120-64, 0x4000},
 	{0,0,0}
 };
 
@@ -68,12 +68,14 @@ int tsJsInputGet() {
 	int btn=0xffff;
     if (esp_lcd_touch_get_coordinates(tp, touch_x, touch_y, touch_strength, &touch_cnt, 8)) {
 		for (int i=0; i<touch_cnt; i++) {
+			printf("Touch %d @ %d,%d\n", i, touch_x[i], touch_y[i]);
 			if (touch_strength[i]>0) {
 				int j=0;
 				while (v_but[j].b!=0) {
 					if (touch_x[i]>v_but[j].x-BUT_R && touch_x[i]<v_but[j].x+BUT_R &&
 							touch_y[i]>v_but[j].y-BUT_R && touch_y[i]<v_but[j].y+BUT_R) {
 						btn&=~v_but[j].b;
+//						printf("Touch %d @ %d,%d -> btn %x\n", i, touch_x[i], touch_y[i], v_but[j].b);
 					}
 					j++;
 				}
