@@ -41,7 +41,8 @@ void sndhw_unlock() {
 	xSemaphoreGive(audio_mux);
 }
 
-#define SND_CHUNKSZ 2048
+//make this equal to the imf tick rate so the music sounds good
+#define SND_CHUNKSZ 560
 
 
 static i2s_chan_handle_t tx_channel;

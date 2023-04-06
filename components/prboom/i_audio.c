@@ -92,8 +92,8 @@ typedef struct {
 	uint16_t delay;
 } imf_packet_t;
 
-//imf is 700Hz tick
-#define IMF_RATE 700
+//imf is 280, 560 or 700Hz tick
+#define IMF_RATE 560
 
 typedef struct {
 	imf_packet_t *imf;
@@ -225,18 +225,13 @@ void I_InitMusic(void) {
 	imfplayer.imf=NULL;
 }
 
-void I_PlaySong(int handle, int looping) {
-    if(handle == mus_None) return;
+void I_PlaySong(uint8_t *data, int len, int looping) {
+    if(!data) return;
 	
 	sndhw_lock();
-	char namebuf[9];
-	sprintf(namebuf, "d_%s", S_music[handle].name);
-	namebuf_upper(namebuf);
-	printf("STUB: I_PlaySong %d (%s)\n", handle, namebuf);
-	int lump=W_GetNumForName(namebuf);
-	imfplayer.imf=(imf_packet_t*)W_CacheLumpNum(lump);
+	imfplayer.imf=(imf_packet_t*)data;
 	imfplayer.pos=0;
-	imfplayer.len=W_LumpLength(lump)/sizeof(imf_packet_t);
+	imfplayer.len=len/sizeof(imf_packet_t);
 	imfplayer.delay_to_go=0;
 	sndhw_unlock();
 }
@@ -246,7 +241,7 @@ void I_PauseSong (int handle){
 //	printf("STUB: I_PauseSong %d\n", handle);
 }
 
-void I_ResumeSong (int handle) {
+void I_ResumeSong () {
 //	printf("STUB: I_ResumeSong %d\n", handle);
 }
 

@@ -136,15 +136,6 @@ void I_StopSong(int handle)
 {
 }
 
-void I_UnRegisterSong(int handle)
-{
-}
-
-int I_RegisterSong(const void *data, size_t len)
-{
-  return (0);
-}
-
 int I_RegisterMusic( const char* filename, musicinfo_t *song )
 {
     return 1;

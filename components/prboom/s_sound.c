@@ -483,8 +483,7 @@ void S_ChangeMusic(int musicnum, int looping)
   int i=0;
   while (g_imf_files[i].name!=NULL) {
     if (strcmp(music->name, g_imf_files[i].name)==0) {
-       music->data = g_imf_files[i].data;
-       music->handle = I_RegisterSong(music->data, g_imf_files[i].end-g_imf_files[i].data);
+       I_PlaySong(g_imf_files[i].data, g_imf_files[i].end-g_imf_files[i].data, looping);
        break;
     }
     i++;
@@ -492,11 +491,10 @@ void S_ChangeMusic(int musicnum, int looping)
 
   if (g_imf_files[i].name==NULL) {
     I_Error("Not found music %s", music->name);
+	return;
   } else {
     printf("Playing music %s\n", music->name);
   }
-  // play it
-  I_PlaySong(music->handle, looping);
 
   mus_playing = music;
 }
@@ -511,12 +509,9 @@ void S_StopMusic(void)
   if (mus_playing)
     {
       if (mus_paused)
-        I_ResumeSong(mus_playing->handle);
+        I_ResumeSong();
 
-      I_StopSong(mus_playing->handle);
-      I_UnRegisterSong(mus_playing->handle);
-      if (mus_playing->lumpnum >= 0)
-  W_UnlockLumpNum(mus_playing->lumpnum); // cph - release the music data
+      I_StopSong();
 
       mus_playing->data = 0;
       mus_playing = 0;

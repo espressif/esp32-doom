@@ -533,7 +533,7 @@ int autodetect_hom = 0;       // killough 2/7/98: HOM autodetection flag
 // R_ShowStats
 //
 int rendered_visplanes, rendered_segs, rendered_vissprites;
-boolean rendering_stats=1;
+boolean rendering_stats=0;
 
 static void R_ShowStats(void)
 {
